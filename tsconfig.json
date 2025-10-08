@@ -9,8 +9,9 @@
     "strict": true,
     "noEmitOnError": false,
     "skipLibCheck": true,
+    "noEmit": true,
     "outDir": "dist",
-    "types": ["chrome"]
+    "types": ["chrome", "vite/client"]
   },
   "include": ["src/**/*"]
 }

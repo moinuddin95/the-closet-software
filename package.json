@@ -3,18 +3,23 @@
   "version": "1.0.0",
   "description": "",
   "main": "background.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "vite build",
+    "dev": "vite",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.2",
     "@types/chrome": "^0.1.22",
+    "@types/node": "^24.7.0",
+    "preact": "^10.27.2",
     "sharp": "^0.34.4",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "preact": "^10.27.2"
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vite-plugin-static-copy": "^3.1.3"
   }
 }
