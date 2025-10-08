@@ -10,6 +10,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "sharp": "^0.34.4"
+    "@types/chrome": "^0.1.22",
+    "sharp": "^0.34.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "preact": "^10.27.2"
   }
 }

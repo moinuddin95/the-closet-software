@@ -1,10 +1,22 @@
-"use strict";
 // Content script to detect product pages and add save button
 (function() {
-  'use strict';
-
   // Product page detection patterns for different e-commerce sites
-  const PRODUCT_PATTERNS = {
+  interface ProductPattern {
+    urlPattern: RegExp;
+    titleSelector: string;
+    imageSelector: string;
+    priceSelector: string;
+    insertTarget: string; // CSS selector where to insert the button
+  }
+  interface ProductInfo {
+    title: string;
+    image: string;
+    price: string;
+    url: string;
+    site: string;
+    timestamp: string;
+  }
+  const PRODUCT_PATTERNS: Record<string, ProductPattern> = {
     amazon: {
       urlPattern: /\/dp\/|\/gp\/product\//,
       titleSelector: '#productTitle',
@@ -48,7 +60,6 @@
       insertTarget: 'h1'
     }
   };
-  
   /**
    * Detects the current e-commerce site based on the window's hostname.
    *
@@ -86,7 +97,7 @@
 
   /**
    * Extracts product information from the page.
-   * @returns {Object} Extracted product information: title, image URL, price, product URL, site, and timestamp.
+   * @returns {ProductInfo} 
    */
   function extractProductInfo() {
     const site = detectSite();
@@ -98,12 +109,12 @@
 
     return {
       title: titleEl ? titleEl.textContent.trim() : 'Unknown Product',
-      image: imageEl ? imageEl.src : '',
+      image: imageEl ? imageEl.getAttribute('src') : '',
       price: priceEl ? priceEl.textContent.trim() : 'N/A',
       url: window.location.href,
       site: site,
       timestamp: new Date().toISOString()
-    };
+    } as ProductInfo;
   }
 
   /**
@@ -121,7 +132,7 @@
     const pattern = PRODUCT_PATTERNS[site];
     const targetElement = document.querySelector(pattern.insertTarget);
 
-    if (!targetElement) {
+    if (!targetElement?.parentNode) {
       console.log('The Closet: Could not find target element for button injection');
       return;
     }
@@ -158,10 +169,10 @@
    * @param {*} event 
    * @return {Promise<void>}
    */
-  async function handleSaveClick(event) {
+  async function handleSaveClick(event: Event) {
     event.preventDefault();
-    
-    const button = event.currentTarget;
+
+    const button = event.currentTarget as HTMLButtonElement;
     const originalContent = button.innerHTML;
     
     // Show loading state
@@ -182,7 +193,7 @@
       const savedProducts = result.savedProducts || [];
       
       // Check if product is already saved
-      const existingIndex = savedProducts.findIndex(p => p.url === productInfo.url);
+      const existingIndex = savedProducts.findIndex((p: ProductInfo) => p.url === productInfo.url);
       
       if (existingIndex >= 0) {
         // Update existing product
@@ -255,6 +266,7 @@
         subtree: true
       });
     }
+    console.log('The Closet: Not a product page');
   }
 
   // Run initialization when DOM is ready

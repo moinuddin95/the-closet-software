@@ -43,13 +43,13 @@
         "*://*.nike.com/*",
         "*://*.adidas.com/*"
       ],
-      "js": ["content.js"],
-      "css": ["styles.css"],
+      "js": ["dist/content.js"],
+      "css": ["src/styles.css"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -62,6 +62,6 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.js"
   }
 }
