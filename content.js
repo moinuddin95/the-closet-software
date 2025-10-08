@@ -1,3 +1,4 @@
+"use strict";
 // Content script to detect product pages and add save button
 (function() {
   'use strict';
@@ -47,8 +48,12 @@
       insertTarget: 'h1'
     }
   };
-
-  // Detect which e-commerce site we're on
+  
+  /**
+   * Detects the current e-commerce site based on the window's hostname.
+   *
+   * @returns {string} The detected site identifier: 'amazon', 'ebay', 'walmart', 'target', 'etsy', or 'generic' if none match.
+   */
   function detectSite() {
     const hostname = window.location.hostname;
     if (hostname.includes('amazon')) return 'amazon';
@@ -59,7 +64,10 @@
     return 'generic';
   }
 
-  // Check if current page is a product page
+  /**
+   * Checks if the current page is a product page.
+   * @returns {boolean} True if the current page is a product page based on URL and DOM patterns.
+   */
   function isProductPage() {
     const site = detectSite();
     const pattern = PRODUCT_PATTERNS[site];
@@ -76,7 +84,10 @@
     return !!(title && image);
   }
 
-  // Extract product information
+  /**
+   * Extracts product information from the page.
+   * @returns {Object} Extracted product information: title, image URL, price, product URL, site, and timestamp.
+   */
   function extractProductInfo() {
     const site = detectSite();
     const pattern = PRODUCT_PATTERNS[site];
@@ -95,7 +106,11 @@
     };
   }
 
-  // Create and inject the save button
+  /**
+   * Injects the "Save Secretly" button into the product page.
+   * DOM Location is sibling to insertTarget in PRODUCT_PATTERNS.
+   * @returns {void}
+   */
   function injectSaveButton() {
     // Check if button already exists
     if (document.getElementById('closet-save-btn')) {
@@ -124,7 +139,7 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
       </svg>
-      <span>Save to Closet</span>
+      <span>Save Secretly</span>
     `;
 
     // Add click handler
@@ -138,7 +153,11 @@
     console.log('The Closet: Save button injected successfully');
   }
 
-  // Handle save button click
+  /**
+   * Handle save button click event.
+   * @param {*} event 
+   * @return {Promise<void>}
+   */
   async function handleSaveClick(event) {
     event.preventDefault();
     
@@ -212,7 +231,10 @@
     }
   }
 
-  // Initialize the extension
+  /**
+   * Initialize the extension.
+   * @returns {void}
+   */
   function init() {
     // Check if we're on a product page
     if (isProductPage()) {
