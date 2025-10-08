@@ -1,0 +1,67 @@
+{
+  "manifest_version": 3,
+  "name": "The Closet - Product Saver",
+  "version": "1.0.0",
+  "description": "Save products from e-commerce websites to your closet",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.ca/*",
+    "*://*.ebay.com/*",
+    "*://*.ebay.co.uk/*",
+    "*://*.walmart.com/*",
+    "*://*.target.com/*",
+    "*://*.etsy.com/*",
+    "*://*.aliexpress.com/*",
+    "*://*.shopify.com/*",
+    "*://*.bestbuy.com/*",
+    "*://*.zalando.com/*",
+    "*://*.asos.com/*",
+    "*://*.nike.com/*",
+    "*://*.adidas.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://*.amazon.ca/*",
+        "*://*.ebay.com/*",
+        "*://*.ebay.co.uk/*",
+        "*://*.walmart.com/*",
+        "*://*.target.com/*",
+        "*://*.etsy.com/*",
+        "*://*.aliexpress.com/*",
+        "*://*.shopify.com/*",
+        "*://*.bestbuy.com/*",
+        "*://*.zalando.com/*",
+        "*://*.asos.com/*",
+        "*://*.nike.com/*",
+        "*://*.adidas.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
