@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Closet - Saved Products</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="header-content">
+        <h1>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          My Closet
+        </h1>
+        <p class="subtitle" id="productCount">0 products saved</p>
+      </div>
+    </header>
+
+    <div class="popup-content">
+      <div id="emptyState" class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        <h2>Your closet is empty</h2>
+        <p>Visit any product page on an e-commerce site and click the "Save to Closet" button to start saving products!</p>
+      </div>
+
+      <div id="productList" class="product-list"></div>
+    </div>
+
+    <footer class="popup-footer">
+      <button id="clearAllBtn" class="clear-btn">Clear All</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+/* Styles for the Save to Closet button */
+.closet-save-container {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+}
+
+.closet-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.closet-save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.closet-save-button:active {
+  transform: translateY(0);
+}
+
+.closet-save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.closet-save-button svg {
+  flex-shrink: 0;
+}
+
+/* Saving state */
+.closet-save-button.closet-saving {
+  background: linear-gradient(135deg, #888 0%, #666 100%);
+}
+
+.closet-spinner {
+  animation: closet-spin 1s linear infinite;
+}
+
+@keyframes closet-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Saved state */
+.closet-save-button.closet-saved {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
+/* Error state */
+.closet-save-button.closet-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .closet-save-button {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+}
