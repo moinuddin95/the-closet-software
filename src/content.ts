@@ -618,6 +618,65 @@
   }
 
   /**
+   * Inject the closet popup into the page.
+   * @returns {void}
+   */
+  async function injectClosetPopup() {
+    // Check if popup already exists
+    if (document.getElementById("closet-main-popup-root")) {
+      return;
+    }
+
+    try {
+      const { ClosetPopup } = await import("./closetPopup");
+      // Create a container for the popup
+      const popupRoot = document.createElement("div");
+      popupRoot.id = "closet-main-popup-root";
+      document.body.appendChild(popupRoot);
+
+      // Render the popup using Preact
+      const { h, render } = await import("preact");
+      render(
+        h(ClosetPopup, {
+          onClose: () => {
+            // Clean up the popup when closed
+            render(null, popupRoot);
+            popupRoot.remove();
+          },
+        }),
+        popupRoot
+      );
+    } catch (error) {
+      console.error("Failed to load closet popup:", error);
+      alert("Sorry, something went wrong loading the closet popup.");
+    }
+  }
+
+  /**
+   * Toggle the closet popup visibility
+   * @returns {void}
+   */
+  function toggleClosetPopup() {
+    const existingPopup = document.getElementById("closet-main-popup-root");
+    
+    if (existingPopup) {
+      // If popup exists, remove it
+      existingPopup.remove();
+    } else {
+      // If popup doesn't exist, inject it
+      injectClosetPopup();
+    }
+  }
+
+  // Listen for messages from background script
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "toggleClosetPopup") {
+      toggleClosetPopup();
+      sendResponse({ success: true });
+    }
+  });
+
+  /**
    * Initialize the extension.
    * @returns {void}
    */
