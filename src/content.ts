@@ -456,6 +456,52 @@
     console.log("The Closet: Save button injected successfully");
   }
 
+  function injectTryonButton() {
+    // Check for prerequisites
+    if (document.getElementById("closet-tryon-btn")) {
+      return;
+    }
+    const pattern = getSitePattern();
+    if (!pattern) return;
+    const targetElement = document.querySelector(pattern.insertTarget);
+    if (!targetElement?.parentNode) {
+      console.log(
+        "The Closet: Could not find target element for button injection"
+      );
+      return;
+    }
+
+    // Create button container
+    const buttonContainer = document.createElement("div");
+    buttonContainer.id = "closet-tryon-btn-container";
+    buttonContainer.className = "closet-tryon-container";
+
+    // Create the try-on button
+    const tryonButton = document.createElement("button");
+    tryonButton.id = "closet-tryon-btn";
+    tryonButton.className = "closet-tryon-button";
+    tryonButton.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
+      </svg>
+      <span>Try On</span>
+    `;
+
+    // Add click handler
+    tryonButton.addEventListener("click", handleTryonClick);
+
+    // Append button to container
+    buttonContainer.appendChild(tryonButton);
+
+    // Insert button after the target element
+    targetElement.parentNode.insertBefore(
+      buttonContainer,
+      targetElement.nextSibling
+    );
+
+    console.log("The Closet: Try on button injected successfully");
+  }
+
   /**
    * Handle save button click event.
    * @param {*} event
@@ -536,6 +582,11 @@
     }
   }
 
+  async function handleTryonClick(event: Event) {
+    event.preventDefault();
+    alert("Try-on feature coming soon!");
+  }
+
   /**
    * Initialize the extension.
    * @returns {void}
@@ -544,7 +595,8 @@
     // Check if we're on a product page
     if (isProductPage()) {
       console.log("The Closet: Product page detected");
-      isApparelPage();
+      if (isApparelPage()) 
+        injectTryonButton();
       // Inject the save button
       injectSaveButton();
 

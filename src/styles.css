@@ -1,11 +1,13 @@
-/* Styles for the Save to Closet button */
-.closet-save-container {
+/* Styles for the Save to Closet button and Try-On button */
+.closet-save-container,
+.closet-tryon-container {
   margin: 15px 0;
   display: flex;
   align-items: center;
 }
 
-.closet-save-button {
+.closet-save-button,
+.closet-tryon-button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -16,7 +18,8 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
@@ -24,26 +27,31 @@
   overflow: hidden;
 }
 
-.closet-save-button:hover {
+.closet-save-button:hover,
+.closet-tryon-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.closet-save-button:active {
+.closet-save-button:active,
+.closet-tryon-button:active {
   transform: translateY(0);
 }
 
-.closet-save-button:disabled {
+.closet-save-button:disabled,
+.closet-tryon-button:disabled {
   cursor: not-allowed;
   opacity: 0.8;
 }
 
-.closet-save-button svg {
+.closet-save-button svg,
+.closet-tryon-button svg {
   flex-shrink: 0;
 }
 
 /* Saving state */
-.closet-save-button.closet-saving {
+.closet-save-button.closet-saving,
+.closet-tryon-button.closet-saving {
   background: linear-gradient(135deg, #888 0%, #666 100%);
 }
 
@@ -61,18 +69,21 @@
 }
 
 /* Saved state */
-.closet-save-button.closet-saved {
+.closet-save-button.closet-saved,
+.closet-tryon-button.closet-saved {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
 
 /* Error state */
-.closet-save-button.closet-error {
+.closet-save-button.closet-error,
+.closet-tryon-button.closet-error {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .closet-save-button {
+  .closet-save-button,
+  .closet-tryon-button {
     font-size: 13px;
     padding: 8px 16px;
   }
