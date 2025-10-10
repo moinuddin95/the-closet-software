@@ -1,13 +1,12 @@
-/* Styles for the Save to Closet button and Try-On button */
-.closet-save-container,
-.closet-tryon-container {
+/* Styles for the Closet buttons */
+.closet-container {
   margin: 15px 0;
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.closet-save-button,
-.closet-tryon-button {
+.closet-button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -27,31 +26,27 @@
   overflow: hidden;
 }
 
-.closet-save-button:hover,
-.closet-tryon-button:hover {
+.closet-button:hover{
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.closet-save-button:active,
-.closet-tryon-button:active {
+.closet-button:active {
   transform: translateY(0);
 }
 
-.closet-save-button:disabled,
-.closet-tryon-button:disabled {
+.closet-button:disabled{
   cursor: not-allowed;
   opacity: 0.8;
 }
 
-.closet-save-button svg,
-.closet-tryon-button svg {
+.closet-button svg,
+svg {
   flex-shrink: 0;
 }
 
 /* Saving state */
-.closet-save-button.closet-saving,
-.closet-tryon-button.closet-saving {
+.closet-button.closet-saving {
   background: linear-gradient(135deg, #888 0%, #666 100%);
 }
 
@@ -69,21 +64,18 @@
 }
 
 /* Saved state */
-.closet-save-button.closet-saved,
-.closet-tryon-button.closet-saved {
+.closet-button.closet-saved {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
 
 /* Error state */
-.closet-save-button.closet-error,
-.closet-tryon-button.closet-error {
+.closet-button.closet-error {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .closet-save-button,
-  .closet-tryon-button {
+  .closet-button {
     font-size: 13px;
     padding: 8px 16px;
   }

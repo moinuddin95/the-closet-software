@@ -402,14 +402,9 @@
     } as ProductInfo;
   }
 
-  /**
-   * Injects the "Save Secretly" button into the product page.
-   * DOM Location is sibling to insertTarget in PRODUCT_PATTERNS.
-   * @returns {void}
-   */
-  function injectSaveButton() {
-    // Check if button already exists
-    if (document.getElementById("closet-save-btn")) {
+  function injectButtonsContainer() {
+    // Check if container already exists
+    if (document.getElementById("closet-btns-container")) {
       return;
     }
 
@@ -427,13 +422,36 @@
 
     // Create button container
     const buttonContainer = document.createElement("div");
-    buttonContainer.id = "closet-save-btn-container";
-    buttonContainer.className = "closet-save-container";
+    buttonContainer.id = "closet-btns-container";
+    buttonContainer.className = "closet-container";
+
+    // Insert button after the target element
+    targetElement.parentNode.insertBefore(
+      buttonContainer,
+      targetElement.nextSibling
+    );
+
+    console.log("The Closet: button container injected successfully");
+  }
+
+  /**
+   * Injects the "Save Secretly" button into the product page.
+   * DOM Location is sibling to insertTarget in PRODUCT_PATTERNS.
+   * @returns {void}
+   */
+  function injectSaveButton() {
+    // Check if button already exists
+    if (document.getElementById("closet-save-btn")) {
+      return;
+    }
+
+    // Select button container
+    const buttonContainer = document.querySelector("#closet-btns-container")!;
 
     // Create the save button
     const saveButton = document.createElement("button");
     saveButton.id = "closet-save-btn";
-    saveButton.className = "closet-save-button";
+    saveButton.className = "closet-button";
     saveButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
@@ -447,39 +465,22 @@
     // Append button to container
     buttonContainer.appendChild(saveButton);
 
-    // Insert button after the target element
-    targetElement.parentNode.insertBefore(
-      buttonContainer,
-      targetElement.nextSibling
-    );
-
     console.log("The Closet: Save button injected successfully");
   }
 
   function injectTryonButton() {
-    // Check for prerequisites
+    // Check if button already exists
     if (document.getElementById("closet-tryon-btn")) {
       return;
     }
-    const pattern = getSitePattern();
-    if (!pattern) return;
-    const targetElement = document.querySelector(pattern.insertTarget);
-    if (!targetElement?.parentNode) {
-      console.log(
-        "The Closet: Could not find target element for button injection"
-      );
-      return;
-    }
 
-    // Create button container
-    const buttonContainer = document.createElement("div");
-    buttonContainer.id = "closet-tryon-btn-container";
-    buttonContainer.className = "closet-tryon-container";
+    // Select button container
+    const buttonContainer = document.querySelector("#closet-btns-container")!;
 
     // Create the try-on button
     const tryonButton = document.createElement("button");
     tryonButton.id = "closet-tryon-btn";
-    tryonButton.className = "closet-tryon-button";
+    tryonButton.className = "closet-button";
     tryonButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
@@ -492,12 +493,6 @@
 
     // Append button to container
     buttonContainer.appendChild(tryonButton);
-
-    // Insert button after the target element
-    targetElement.parentNode.insertBefore(
-      buttonContainer,
-      targetElement.nextSibling
-    );
 
     console.log("The Closet: Try on button injected successfully");
   }
@@ -594,11 +589,13 @@
   function init() {
     // Check if we're on a product page
     if (isProductPage()) {
+      injectButtonsContainer();
       console.log("The Closet: Product page detected");
+      injectSaveButton();
+
       if (isApparelPage()) 
         injectTryonButton();
       // Inject the save button
-      injectSaveButton();
 
       // Re-check after DOM changes (for SPAs)
       const observer = new MutationObserver(() => {
