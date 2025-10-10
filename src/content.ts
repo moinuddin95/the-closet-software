@@ -468,6 +468,11 @@
     console.log("The Closet: Save button injected successfully");
   }
 
+  /**
+   * Injects the "Try On" button into the product page if it's an apparel item.
+   * DOM Location is sibling to insertTarget in PRODUCT_PATTERNS.
+   * @returns {void}
+   */
   function injectTryonButton() {
     // Check if button already exists
     if (document.getElementById("closet-tryon-btn")) {
@@ -495,6 +500,9 @@
     buttonContainer.appendChild(tryonButton);
 
     console.log("The Closet: Try on button injected successfully");
+  }
+
+  function injectTryonImageUploadPopup() {
   }
 
   /**
