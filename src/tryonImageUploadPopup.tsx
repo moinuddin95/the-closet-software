@@ -21,8 +21,8 @@ export function TryonImageUploadPopup({ onClose }: TryonImageUploadPopupProps) {
   }
 
   return (
-    <div className="tryon-popup-overlay" onClick={onClose}>
-      <div className="tryon-popup-container" onClick={(e) => e.stopPropagation()}>
+    <div className="tryon-popup-overlay">
+      <div className="tryon-popup-container">
         <div className="tryon-popup-header">
           <h2>Upload Your Image</h2>
           <button className="tryon-close-btn" onClick={onClose}>

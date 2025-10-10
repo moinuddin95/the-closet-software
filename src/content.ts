@@ -628,8 +628,7 @@
       console.log("The Closet: Product page detected");
       injectSaveButton();
 
-      if (isApparelPage()) 
-        injectTryonButton();
+      if (isApparelPage()) injectTryonButton();
       // Inject the save button
 
       // Re-check after DOM changes (for SPAs)
@@ -643,8 +642,9 @@
         childList: true,
         subtree: true,
       });
+    } else {
+      console.log("The Closet: Not a product page");
     }
-    console.log("The Closet: Not a product page");
   }
 
   // Run initialization when DOM is ready
