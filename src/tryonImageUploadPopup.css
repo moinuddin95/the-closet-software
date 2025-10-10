@@ -1,0 +1,187 @@
+/* Try-on Image Upload Popup Styles */
+.tryon-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tryon-popup-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.tryon-popup-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tryon-popup-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.tryon-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.tryon-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tryon-popup-content {
+  padding: 30px;
+}
+
+.tryon-upload-area {
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  transition: border-color 0.2s;
+  position: relative;
+}
+
+.tryon-upload-area:hover {
+  border-color: #667eea;
+}
+
+.tryon-upload-area svg {
+  margin-bottom: 16px;
+}
+
+.tryon-upload-text {
+  margin: 16px 0;
+  color: #4a5568;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.tryon-file-input {
+  display: none;
+}
+
+.tryon-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.tryon-upload-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tryon-popup-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.tryon-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tryon-cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.tryon-cancel-btn:hover {
+  background: #d1d5db;
+}
+
+.tryon-upload-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.tryon-upload-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tryon-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tryon-popup-container {
+    width: 95%;
+  }
+
+  .tryon-popup-content {
+    padding: 20px;
+  }
+
+  .tryon-upload-area {
+    padding: 30px 20px;
+  }
+}

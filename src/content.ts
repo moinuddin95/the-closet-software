@@ -579,7 +579,42 @@
 
   async function handleTryonClick(event: Event) {
     event.preventDefault();
-    alert("Try-on feature coming soon!");
+    injectTryonImageUploadPopup();
+  }
+
+  /**
+   * Inject the try-on image upload popup into the page.
+   * @returns {void}
+   */
+  async function injectTryonImageUploadPopup() {
+    // Check if popup already exists
+    if (document.getElementById("closet-tryon-popup-root")) {
+      return;
+    }
+
+    try {
+      const { TryonImageUploadPopup } = await import("./tryonImageUploadPopup");
+      // Create a container for the popup
+      const popupRoot = document.createElement("div");
+      popupRoot.id = "closet-tryon-popup-root";
+      document.body.appendChild(popupRoot);
+
+      // Render the popup using Preact
+      const { h, render } = await import("preact");
+      render(
+        h(TryonImageUploadPopup, {
+          onClose: () => {
+            // Clean up the popup when closed
+            render(null, popupRoot);
+            popupRoot.remove();
+          },
+        }),
+        popupRoot
+      );
+    } catch (error) {
+      console.error("Failed to load try-on popup:", error);
+      alert("Sorry, something went wrong loading the try-on popup.");
+    }
   }
 
   /**
