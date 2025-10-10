@@ -8,10 +8,204 @@
     priceSelector: string;
     insertTarget: string; // CSS selector where to insert the button
   }
-  interface SitePatternsByExtension {
+  interface ProductPatternBySiteExtension {
     ca?: ProductPattern;
     com: ProductPattern;
   }
+  const apparelKeywords = [
+    // Tops
+    "t-shirt",
+    "tee",
+    "shirt",
+    "blouse",
+    "tank",
+    "tank top",
+    "camisole",
+    "crop top",
+    "polo",
+    "henley",
+    "tunic",
+    "sweatshirt",
+    "hoodie",
+    "sweater",
+    "jumper",
+    "cardigan",
+    "pullover",
+    "vest",
+    "corset",
+    "bodysuit",
+    "tube top",
+    "halter top",
+
+    // Bottoms
+    "jeans",
+    "pants",
+    "trousers",
+    "slacks",
+    "chinos",
+    "cargo pants",
+    "leggings",
+    "joggers",
+    "sweatpants",
+    "shorts",
+    "capris",
+    "culottes",
+    "skirt",
+    "miniskirt",
+    "maxi skirt",
+    "midi skirt",
+
+    // Dresses & Sets
+    "dress",
+    "gown",
+    "maxi dress",
+    "midi dress",
+    "mini dress",
+    "sundress",
+    "jumpsuit",
+    "romper",
+    "playsuit",
+    "bodysuit",
+    "co-ord",
+    "two-piece set",
+    "overalls",
+    "dungarees",
+    "unitard",
+    "catsuit",
+
+    // Outerwear
+    "jacket",
+    "coat",
+    "overcoat",
+    "trench coat",
+    "blazer",
+    "windbreaker",
+    "parka",
+    "puffer",
+    "raincoat",
+    "bomber",
+    "leather jacket",
+    "denim jacket",
+    "fleece",
+    "cape",
+    "poncho",
+    "gilet",
+
+    // Footwear
+    "shoes",
+    "sneakers",
+    "trainers",
+    "boots",
+    "ankle boots",
+    "knee-high boots",
+    "sandals",
+    "heels",
+    "pumps",
+    "flats",
+    "loafers",
+    "oxfords",
+    "slippers",
+    "flip flops",
+    "clogs",
+    "mules",
+
+    // Accessories
+    "hat",
+    "cap",
+    "beanie",
+    "scarf",
+    "gloves",
+    "belt",
+    "tie",
+    "necktie",
+    "bow tie",
+    "suspenders",
+    "watch",
+    "bracelet",
+    "necklace",
+    "earrings",
+    "ring",
+    "sunglasses",
+    "glasses",
+    "headband",
+    "bandana",
+
+    // Undergarments & Sleepwear
+    "underwear",
+    "bra",
+    "panties",
+    "briefs",
+    "boxers",
+    "boxer briefs",
+    "lingerie",
+    "sleepwear",
+    "pajamas",
+    "robe",
+    "nightgown",
+    "nightdress",
+    "slip",
+    "bralette",
+    "camisole",
+    "loungewear",
+    "thermal",
+    "long johns",
+
+    // Sportswear
+    "activewear",
+    "sportswear",
+    "gym wear",
+    "leggings",
+    "sports bra",
+    "tracksuit",
+    "joggers",
+    "running shorts",
+    "yoga pants",
+    "compression shirt",
+    "jersey",
+    "training top",
+    "rash guard",
+    "cycling shorts",
+
+    // Kidswear
+    "onesie",
+    "romper",
+    "baby suit",
+    "kidswear",
+    "toddler outfit",
+    "school uniform",
+    "baby shoes",
+    "bibs",
+    "mittens",
+
+    // Traditional / Formalwear
+    "suit",
+    "tuxedo",
+    "dress shirt",
+    "kurta",
+    "saree",
+    "lehenga",
+    "kimono",
+    "hanbok",
+    "cheongsam",
+    "abaya",
+    "kaftan",
+    "thobe",
+    "formal dress",
+    "evening dress",
+
+    // Swimwear
+    "swimsuit",
+    "bikini",
+    "one-piece",
+    "two-piece",
+    "board shorts",
+    "swim trunks",
+    "rash vest",
+    "cover-up",
+    "sarong",
+    "beachwear",
+  ];
+  // Product information schema for saving the product
   interface ProductInfo {
     title: string;
     image: string;
@@ -20,7 +214,7 @@
     site: string;
     timestamp: string;
   }
-  const PRODUCT_PATTERNS: Record<string, SitePatternsByExtension> = {
+  const PRODUCT_PATTERNS: Record<string, ProductPatternBySiteExtension> = {
     amazon: {
       com: {
         urlPattern: /\/dp\/|\/gp\/product\//,
@@ -115,21 +309,32 @@
    * Gets the product pattern for the current site and extension.
    * Returns null if no valid pattern is found.
    * @returns {ProductPattern | null}
-   */ 
+   */
   function getSitePattern() {
     let siteExtension = getSiteExtension();
-    if (siteExtension === "n/a")
-      return null;
+    if (siteExtension === "n/a") return null;
 
     const site = getSiteIdentifier();
     const patternsWithExtensions = PRODUCT_PATTERNS[site];
     // Switch to .com if the existing site extension pattern doesn't exist
-    siteExtension = siteExtension !== "com" && !patternsWithExtensions[siteExtension as keyof SitePatternsByExtension] ? "com" : siteExtension;
+    siteExtension =
+      siteExtension !== "com" &&
+      !patternsWithExtensions[
+        siteExtension as keyof ProductPatternBySiteExtension
+      ]
+        ? "com"
+        : siteExtension;
     // Check URL pattern
-    if (!patternsWithExtensions?.[siteExtension as keyof SitePatternsByExtension]?.urlPattern.test(window.location.href))
+    if (
+      !patternsWithExtensions?.[
+        siteExtension as keyof ProductPatternBySiteExtension
+      ]?.urlPattern.test(window.location.href)
+    )
       return null;
 
-    return patternsWithExtensions[siteExtension as keyof SitePatternsByExtension]!;
+    return patternsWithExtensions[
+      siteExtension as keyof ProductPatternBySiteExtension
+    ]!;
   }
 
   /**
@@ -151,6 +356,28 @@
   }
 
   /**
+   * Checks if the current product page is likely an apparel page based on title keywords.
+   * @returns {boolean} True if the product title contains apparel-related keywords.
+   */
+  function isApparelPage() {
+    const pattern = getSitePattern();
+    if (!pattern) return false;
+
+    const titleEl = document.querySelector(pattern.titleSelector);
+    for (const keyword of apparelKeywords) {
+      if (titleEl?.textContent?.toLowerCase().includes(keyword)) {
+        console.log(
+          "The Closet: Detected apparel page with title",
+          titleEl.textContent
+        );
+        return true;
+      }
+    }
+    console.log("The Closet: Not an apparel page");
+    return false;
+  }
+
+  /**
    * Extracts product information from the page.
    * @returns {ProductInfo}
    */
@@ -166,7 +393,9 @@
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageEl ? imageEl.getAttribute("src") : "",
-      price: priceEl ? priceEl.textContent.match(/\$\d+(\.\d{2})?/)?.[0] : "N/A",
+      price: priceEl
+        ? priceEl.textContent.match(/\$\d+(\.\d{2})?/)?.[0]
+        : "N/A",
       url: window.location.href,
       site: site,
       timestamp: new Date().toISOString(),
@@ -315,7 +544,7 @@
     // Check if we're on a product page
     if (isProductPage()) {
       console.log("The Closet: Product page detected");
-
+      isApparelPage();
       // Inject the save button
       injectSaveButton();
 
