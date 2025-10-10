@@ -166,7 +166,7 @@
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageEl ? imageEl.getAttribute("src") : "",
-      price: priceEl ? priceEl.textContent.trim() : "N/A",
+      price: priceEl ? priceEl.textContent.match(/\$\d+(\.\d{2})?/)?.[0] : "N/A",
       url: window.location.href,
       site: site,
       timestamp: new Date().toISOString(),
