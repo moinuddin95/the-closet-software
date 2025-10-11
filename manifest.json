@@ -3,10 +3,8 @@
   "name": "The Closet Software",
   "version": "1.0.0",
   "description": "Save products from e-commerce websites to your closet",
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
+  "permissions": ["storage", "activeTab"],
+
   "host_permissions": [
     "*://*.amazon.com/*",
     "*://*.amazon.co.uk/*",
@@ -26,23 +24,7 @@
   ],
   "content_scripts": [
     {
-      "matches": [
-        "*://*.amazon.com/*",
-        "*://*.amazon.co.uk/*",
-        "*://*.amazon.ca/*",
-        "*://*.ebay.com/*",
-        "*://*.ebay.co.uk/*",
-        "*://*.walmart.com/*",
-        "*://*.target.com/*",
-        "*://*.etsy.com/*",
-        "*://*.aliexpress.com/*",
-        "*://*.shopify.com/*",
-        "*://*.bestbuy.com/*",
-        "*://*.zalando.com/*",
-        "*://*.asos.com/*",
-        "*://*.nike.com/*",
-        "*://*.adidas.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["src/content.js"],
       "css": ["src/styles.css"],
       "run_at": "document_idle"
@@ -63,5 +45,11 @@
   },
   "background": {
     "service_worker": "src/background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/*.css", "src/*.js", "assets/*.js", "assets/*.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

@@ -11,6 +11,7 @@ export default defineConfig({
         { src: 'manifest.json', dest: '.' },
         { src: 'icons', dest: '.' },
         { src: 'src/styles.css', dest: 'src' },
+        { src: 'src/tryonImageUploadPopup.css', dest: 'src' },
       ],
     }),
   ],
@@ -22,6 +23,7 @@ export default defineConfig({
         popup: resolve(__dirname, 'src/popup.html'),
         background: resolve(__dirname, 'src/background.js'),
         content: resolve(__dirname, 'src/content.ts'),
+        tryonImageUploadPopup: resolve(__dirname, 'src/tryonImageUploadPopup.tsx'),
       },
       output: {
         entryFileNames: 'src/[name].js',
