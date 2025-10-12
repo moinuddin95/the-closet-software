@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import './popup.css';
 
@@ -18,8 +17,8 @@ export function Popup() {
   useEffect(() => {
     (async () => {
       try {
-        const result = await chrome.storage.local.get(["savedProducts"]);
-        setProducts(result.savedProducts || []);
+        const { products: result} = await chrome.runtime.sendMessage({ action: "getProducts" });
+        setProducts(result || []);
       } catch (err) {
         console.error("Error loading products:", err);
       } finally {

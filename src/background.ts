@@ -1,5 +1,14 @@
 // Background service worker for The Closet extension
 
+// Product information schema for saving the product
+  interface ProductInfo {
+    title: string;
+    image: string;
+    price: string;
+    url: string;
+    site: string;
+    timestamp: string;
+  }
 // Listen for installation
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -32,13 +41,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Handle saving a product
-async function handleSaveProduct(product) {
+async function handleSaveProduct(product: ProductInfo) {
   try {
     const result = await chrome.storage.local.get(['savedProducts']);
     const savedProducts = result.savedProducts || [];
-    
+
     // Check if product already exists
-    const existingIndex = savedProducts.findIndex(p => p.url === product.url);
+    const existingIndex = savedProducts.findIndex((p: ProductInfo) => p.url === product.url);
     
     if (existingIndex >= 0) {
       savedProducts[existingIndex] = product;
@@ -49,7 +58,7 @@ async function handleSaveProduct(product) {
     await chrome.storage.local.set({ savedProducts: savedProducts });
     
     return { success: true, message: 'Product saved successfully' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving product:', error);
     return { success: false, error: error.message };
   }
