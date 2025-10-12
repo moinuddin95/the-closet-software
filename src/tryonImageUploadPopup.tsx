@@ -1,6 +1,6 @@
-import { h } from "preact";
+import { render } from "preact"
 import { useState } from "preact/hooks";
-// CSS is injected at runtime from content.ts
+import "./tryonImageUploadPopup.css";
 
 interface TryonImageUploadPopupProps {
   onClose: () => void;
@@ -76,4 +76,12 @@ export function TryonImageUploadPopup({ onClose }: TryonImageUploadPopupProps) {
       </div>
     </div>
   );
+}
+
+
+
+const container = document.getElementById("closet-tryon-popup-root");
+if (container) {
+  render(<TryonImageUploadPopup onClose={() => {
+  }} />, container);
 }

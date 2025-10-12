@@ -489,7 +489,10 @@
     `;
 
     // Add click handler
-    tryonButton.addEventListener("click", async (e: Event) => await handleTryonClick(e));
+    tryonButton.addEventListener(
+      "click",
+      async (e: Event) => await handleTryonClick(e)
+    );
 
     // Append button to container
     buttonContainer.appendChild(tryonButton);
@@ -600,49 +603,23 @@
     if (document.getElementById("closet-tryon-popup-root")) {
       return;
     }
+    
+    // Create link tag to inject the compiled CSS
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = chrome.runtime.getURL("src/tryonImageUploadPopup.css");
+    document.head.appendChild(link);
 
-    try {
-      // // Get CSS content from extension and inject it
-      // const styleElement = document.createElement("style");
-      // styleElement.id = "closet-tryon-popup-styles";
+    // Create a container for the popup
+    const popupRoot = document.createElement("div");
+    popupRoot.id = "closet-tryon-popup-root";
+    document.body.appendChild(popupRoot);
 
-      // // Get CSS content from extension
-      // const cssUrl = chrome.runtime.getURL("src/tryonImageUploadPopup.css");
-      // const cssResponse = await fetch(cssUrl);
-      // const cssText = await cssResponse.text();
-
-      // styleElement.textContent = cssText;
-      // document.head.appendChild(styleElement);
-
-      // Import component from extension bundle (not the page origin)
-      const moduleUrl = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
-      const { TryonImageUploadPopup } = await import(moduleUrl);
-      
-      // Create a container for the popup
-      const popupRoot = document.createElement("div");
-      popupRoot.id = "closet-tryon-popup-root";
-      document.body.appendChild(popupRoot);
-
-      // Render the popup using Preact
-      const { h, render } = await import("preact");
-      render(
-        h(TryonImageUploadPopup, {
-          onClose: () => {
-            // Clean up the popup when closed
-            render(null, popupRoot);
-            popupRoot.remove();
-
-            // Remove the injected styles
-            const styles = document.getElementById("closet-tryon-popup-styles");
-            if (styles) styles.remove();
-          },
-        }),
-        popupRoot
-      );
-    } catch (error) {
-      console.error("Failed to load try-on popup:", error);
-      alert("Sorry, something went wrong loading the try-on popup.");
-    }
+    // Create script tag to inject the compiled TSX bundle
+    const script = document.createElement("script");
+    script.src = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
+    script.type = "module";
+    document.body.appendChild(script);
   }
 
   /**

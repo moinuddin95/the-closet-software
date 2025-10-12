@@ -11,7 +11,6 @@ export default defineConfig({
         { src: 'manifest.json', dest: '.' },
         { src: 'icons', dest: '.' },
         { src: 'src/styles.css', dest: 'src' },
-        { src: 'src/tryonImageUploadPopup.css', dest: 'src' },
       ],
     }),
   ],
