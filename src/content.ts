@@ -601,9 +601,10 @@
   async function injectTryonImageUploadPopup() {
     // Check if popup already exists
     if (document.getElementById("closet-tryon-popup-root")) {
+      document.getElementById("closet-tryon-popup-root")!.style.display = "block";
       return;
     }
-    
+
     // Create link tag to inject the compiled CSS
     const link = document.createElement("link");
     link.rel = "stylesheet";

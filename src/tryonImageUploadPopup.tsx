@@ -1,13 +1,14 @@
-import { render } from "preact"
+import { render } from "preact";
 import { useState } from "preact/hooks";
 import "./tryonImageUploadPopup.css";
 
-interface TryonImageUploadPopupProps {
-  onClose: () => void;
-}
-
-export function TryonImageUploadPopup({ onClose }: TryonImageUploadPopupProps) {
+export function TryonImageUploadPopup() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  const onClose = () => {
+    document.getElementById("closet-tryon-popup-root")!.style.display = "none";
+  };
 
   function handleUploadClick() {
     // Logic to be added later
@@ -43,11 +44,17 @@ export function TryonImageUploadPopup({ onClose }: TryonImageUploadPopupProps) {
             >
               <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
             </svg>
-            <p className="tryon-upload-text">
-              {selectedFile
-                ? selectedFile.name
-                : "Click to select an image or drag and drop"}
-            </p>
+            {selectedFile ? (
+              <img
+                src={URL.createObjectURL(selectedFile)}
+                alt={selectedFile.name}
+                className="tryon-upload-preview"
+              />
+            ) : (
+              <p className="tryon-upload-text">
+                "Click to select an image or drag and drop"
+              </p>
+            )}
             <input
               type="file"
               id="tryon-file-input"
@@ -78,10 +85,10 @@ export function TryonImageUploadPopup({ onClose }: TryonImageUploadPopupProps) {
   );
 }
 
-
-
 const container = document.getElementById("closet-tryon-popup-root");
 if (container) {
-  render(<TryonImageUploadPopup onClose={() => {
-  }} />, container);
+  render(
+    <TryonImageUploadPopup />,
+    container
+  );
 }
