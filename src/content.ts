@@ -545,15 +545,6 @@
       // Save to storage
       await chrome.storage.local.set({ savedProducts: savedProducts });
 
-      // const response = await chrome.runtime.sendMessage({
-      //   action: "saveProduct",
-      //   data: productInfo,
-      // });
-
-      // console.log("The Closet: Save product response", response);
-
-      // if (!response.success) throw new Error("Failed to save product, response error", response);
-
       // Show success state
       button.classList.remove("closet-saving");
       button.classList.add("closet-saved");

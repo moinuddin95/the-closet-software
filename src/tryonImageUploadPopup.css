@@ -171,6 +171,13 @@
   cursor: not-allowed;
 }
 
+.tryon-upload-preview{
+  max-width: 400px;
+  width: 80%;
+  max-height: calc(90vh - 6px);
+  border-radius: 12px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .tryon-popup-container {
