@@ -525,25 +525,35 @@
       const productInfo = extractProductInfo();
       if (!productInfo) throw new Error("Failed to extract product info");
 
-      // Get existing saved products
-      const result = await chrome.storage.local.get(["savedProducts"]);
-      const savedProducts = result.savedProducts || [];
+      // Depricated manual storage handling
+      // // Get existing saved products
+      // const result = await chrome.storage.local.get(["savedProducts"]);
+      // const savedProducts = result.savedProducts || [];
 
-      // Check if product is already saved
-      const existingIndex = savedProducts.findIndex(
-        (p: ProductInfo) => p.url === productInfo.url
-      );
+      // // Check if product is already saved
+      // const existingIndex = savedProducts.findIndex(
+      //   (p: ProductInfo) => p.url === productInfo.url
+      // );
 
-      if (existingIndex >= 0) {
-        // Update existing product
-        savedProducts[existingIndex] = productInfo;
-      } else {
-        // Add new product
-        savedProducts.unshift(productInfo);
-      }
+      // if (existingIndex >= 0) {
+      //   // Update existing product
+      //   savedProducts[existingIndex] = productInfo;
+      // } else {
+      //   // Add new product
+      //   savedProducts.unshift(productInfo);
+      // }
 
-      // Save to storage
-      await chrome.storage.local.set({ savedProducts: savedProducts });
+      // // Save to storage
+      // await chrome.storage.local.set({ savedProducts: savedProducts });
+
+      const response = await chrome.runtime.sendMessage({
+        action: "saveProduct",
+        product: productInfo,
+      });
+
+      console.log("The Closet: Save product response", response);
+
+      if (!response.success) throw new Error("Failed to save product, response error", response);
 
       // Show success state
       button.classList.remove("closet-saving");
