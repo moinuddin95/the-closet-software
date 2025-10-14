@@ -38,6 +38,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (request.action === 'removeProduct') {
+    handleRemoveProduct(request.product)
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
 });
 
 // Handle saving a product
@@ -60,6 +67,19 @@ async function handleSaveProduct(product: ProductInfo) {
     return { success: true, message: 'Product saved successfully' };
   } catch (error: any) {
     console.error('Error saving product:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleRemoveProduct(product: ProductInfo) {
+  try {
+    const result = await chrome.storage.local.get(['savedProducts']);
+    const savedProducts = result.savedProducts || [];
+    const updatedProducts = savedProducts.filter((p: ProductInfo) => p.url !== product.url);
+    await chrome.storage.local.set({ savedProducts: updatedProducts });
+    return { success: true, message: 'Product removed successfully' };
+  } catch (error: any) {
+    console.error('Error removing product:', error);
     return { success: false, error: error.message };
   }
 }

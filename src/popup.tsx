@@ -42,14 +42,9 @@ export function Popup() {
   }, []);
 
   async function removeProduct(index: number) {
-    try {
-      const result = await chrome.storage.local.get(["savedProducts"]);
-      const updated = (result.savedProducts || []) as Product[];
-      updated.splice(index, 1);
-      await chrome.storage.local.set({ savedProducts: updated });
-      setProducts([...updated]);
-    } catch (err) {
-      console.error("Error removing product:", err);
+    const { success } = await chrome.runtime.sendMessage({ action: "removeProduct", product: products[index] });
+    if (!success) {
+      alert("Failed to remove product. Please try again.");
     }
   }
 
