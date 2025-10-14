@@ -45,6 +45,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }
+
+  if (request.action === 'clearAll') {
+    clearAllProducts()
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
 });
 
 // Handle saving a product
@@ -80,6 +87,16 @@ async function handleRemoveProduct(product: ProductInfo) {
     return { success: true, message: 'Product removed successfully' };
   } catch (error: any) {
     console.error('Error removing product:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function clearAllProducts() {
+  try {
+    await chrome.storage.local.set({ savedProducts: [] });
+    return { success: true, message: 'All products cleared successfully' };
+  } catch (error: any) {
+    console.error('Error clearing all products:', error);
     return { success: false, error: error.message };
   }
 }

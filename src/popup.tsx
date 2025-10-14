@@ -50,8 +50,7 @@ export function Popup() {
 
   async function clearAll() {
     if (!confirm("Are you sure you want to remove all saved products?")) return;
-    await chrome.storage.local.set({ savedProducts: [] });
-    setProducts([]);
+    await chrome.runtime.sendMessage({ action: "clearAll" });
   }
 
   function openProduct(url: string) {
