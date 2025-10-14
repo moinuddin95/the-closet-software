@@ -636,7 +636,12 @@
       if (response.user) {
         console.log("The Closet: User found:", response.user);
       } else {
-        console.log("The Closet: No user found: ", response);
+        chrome.runtime.sendMessage({ action: "signInAnonymously" }).then(
+          (res) => {
+            if (res.user) console.log("The Closet: Signed in anonymously:", res.user);
+            else console.error("The Closet: Anonymous sign-in failed:", res.error);
+          }
+        );
       }
     });
 
