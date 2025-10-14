@@ -553,7 +553,8 @@
 
       console.log("The Closet: Save product response", response);
 
-      if (!response.success) throw new Error("Failed to save product, response error", response);
+      if (!response.success)
+        throw new Error("Failed to save product, response error", response);
 
       // Show success state
       button.classList.remove("closet-saving");
@@ -602,7 +603,8 @@
   async function injectTryonImageUploadPopup() {
     // Check if popup already exists
     if (document.getElementById("closet-tryon-popup-root")) {
-      document.getElementById("closet-tryon-popup-root")!.style.display = "block";
+      document.getElementById("closet-tryon-popup-root")!.style.display =
+        "block";
       return;
     }
 
@@ -630,6 +632,14 @@
    */
   function init() {
     // Check if we're on a product page
+    chrome.runtime.sendMessage({ action: "getUser" }).then((response) => {
+      if (response.user) {
+        console.log("The Closet: User found:", response.user);
+      } else {
+        console.log("The Closet: No user found: ", response);
+      }
+    });
+
     if (isProductPage()) {
       injectButtonsContainer();
       console.log("The Closet: Product page detected");

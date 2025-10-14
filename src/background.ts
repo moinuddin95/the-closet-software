@@ -1,4 +1,4 @@
-// Background service worker for The Closet extension
+import { supabase } from './supabaseConfig';
 
 // Product information schema for saving the product
   interface ProductInfo {
@@ -25,32 +25,43 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+  //Messages for save functionality
   if (request.action === 'saveProduct') {
     handleSaveProduct(request.product)
       .then(response => sendResponse(response))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }
-  
   if (request.action === 'getProducts') {
     chrome.storage.local.get(['savedProducts'], (result) => {
       sendResponse({ products: result.savedProducts || [] });
     });
     return true;
   }
-
   if (request.action === 'removeProduct') {
     handleRemoveProduct(request.product)
       .then(response => sendResponse(response))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }
-
   if (request.action === 'clearAll') {
     clearAllProducts()
       .then(response => sendResponse(response))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
+  }
+
+  // Messages for auth functionality
+  if (request.action === 'getUser') {
+    supabase.auth.signInAnonymously().then(( {data, error} ) => {
+      if (error) {
+        sendResponse({ user: null, error });
+      } else {
+        sendResponse({ user: data.user });
+      }
+    });
+    return true;
   }
 });
 
