@@ -11,6 +11,7 @@
   interface ProductPatternBySiteExtension {
     ca?: ProductPattern;
     com: ProductPattern;
+    "co.uk"?: ProductPattern;
   }
   const apparelKeywords = [
     // Tops
@@ -224,9 +225,24 @@
           ".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice",
         insertTarget: "#titleSection, #title_feature_div",
       },
+      "co.uk": {
+        urlPattern: /\/dp\/|\/gp\/product\//,
+        titleSelector: "#productTitle",
+        imageSelector: "#landingImage, #imgTagWrapperId img",
+        priceSelector:
+          ".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice",
+        insertTarget: "#titleSection, #title_feature_div",
+      },
     },
     ebay: {
       com: {
+        urlPattern: /\/itm\//,
+        titleSelector: ".x-item-title__mainTitle, h1.it-ttl",
+        imageSelector: ".ux-image-carousel-item img, #icImg",
+        priceSelector: ".x-price-primary .ux-textspans, #prcIsum",
+        insertTarget: ".x-item-title, .it-ttl",
+      },
+      "co.uk": {
         urlPattern: /\/itm\//,
         titleSelector: ".x-item-title__mainTitle, h1.it-ttl",
         imageSelector: ".ux-image-carousel-item img, #icImg",
@@ -268,6 +284,69 @@
         insertTarget: "h1",
       },
     },
+    aliexpress: {
+      com: {
+        urlPattern: /\/item\//,
+        titleSelector: "h1",
+        imageSelector: '.magnifier-image img, img[class*="magnifier"]',
+        priceSelector: '[class*="price"], .product-price-value',
+        insertTarget: "h1",
+      },
+    },
+    bestbuy: {
+      com: {
+        urlPattern: /\/site\/.*\/\d+\.p/,
+        titleSelector: '.sku-title h1, [data-testid="product-title"]',
+        imageSelector: '.primary-image img, [data-testid="product-image"]',
+        priceSelector: '[data-testid="customer-price"], .priceView-customer-price',
+        insertTarget: ".sku-title",
+      },
+    },
+    nike: {
+      com: {
+        urlPattern: /\/t\//,
+        titleSelector: '#pdp_product_title, h1[data-test="product-title"]',
+        imageSelector: 'img[class*="image-component"], .product-image img',
+        priceSelector: '[data-test="product-price"], .product-price',
+        insertTarget: '#pdp_product_title, h1[data-test="product-title"]',
+      },
+    },
+    adidas: {
+      com: {
+        urlPattern: /\/.*\.html/,
+        titleSelector: 'h1[class*="name"], .product-title h1',
+        imageSelector: '.image-container img, .gallery-image img',
+        priceSelector: '[class*="price"], .gl-price',
+        insertTarget: 'h1[class*="name"]',
+      },
+    },
+    zalando: {
+      com: {
+        urlPattern: /\/.*\.html/,
+        titleSelector: 'h1[class*="title"], .z-ui-text-title',
+        imageSelector: '[class*="image-wrapper"] img, .z-media-image',
+        priceSelector: '[class*="price"], .z-ui-text-price',
+        insertTarget: 'h1[class*="title"]',
+      },
+    },
+    asos: {
+      com: {
+        urlPattern: /\/prd\//,
+        titleSelector: 'h1, [data-testid="product-title"]',
+        imageSelector: '.gallery img, [data-testid="product-image"]',
+        priceSelector: '[data-testid="current-price"], .product-price',
+        insertTarget: "h1",
+      },
+    },
+    shopify: {
+      com: {
+        urlPattern: /\/products\//,
+        titleSelector: 'h1[class*="product"], .product-title h1, h1.product__title',
+        imageSelector: '.product-image img, .product__media img, img[class*="product"]',
+        priceSelector: '[class*="price"], .product-price, .price',
+        insertTarget: 'h1[class*="product"], .product-title',
+      },
+    },
     generic: {
       com: {
         urlPattern: /.*/,
@@ -282,7 +361,7 @@
   /**
    * Detects the current e-commerce site based on the window's hostname.
    *
-   * @returns {string} The detected site identifier: 'amazon', 'ebay', 'walmart', 'target', 'etsy', or 'generic' if none match.
+   * @returns {string} The detected site identifier: 'amazon', 'ebay', 'walmart', 'target', 'etsy', 'aliexpress', 'bestbuy', 'nike', 'adidas', 'zalando', 'asos', 'shopify', or 'generic' if none match.
    */
   function getSiteIdentifier() {
     const hostname = window.location.hostname;
@@ -291,15 +370,23 @@
     if (hostname.includes("walmart")) return "walmart";
     if (hostname.includes("target")) return "target";
     if (hostname.includes("etsy")) return "etsy";
+    if (hostname.includes("aliexpress")) return "aliexpress";
+    if (hostname.includes("bestbuy")) return "bestbuy";
+    if (hostname.includes("nike")) return "nike";
+    if (hostname.includes("adidas")) return "adidas";
+    if (hostname.includes("zalando")) return "zalando";
+    if (hostname.includes("asos")) return "asos";
+    if (hostname.includes("shopify")) return "shopify";
     return "generic";
   }
   /**
-   * Gets the site extension (e.g., 'com', 'ca') based on the hostname.
+   * Gets the site extension (e.g., 'com', 'ca', 'co.uk') based on the hostname.
    * Defaults to 'n/a' if no recognized extension is found.
    * @returns {string} The site extension.
    */
   function getSiteExtension() {
     const hostname = window.location.hostname;
+    if (hostname.endsWith(".co.uk")) return "co.uk";
     if (hostname.endsWith(".ca")) return "ca";
     if (hostname.endsWith(".com")) return "com";
     return "n/a";
