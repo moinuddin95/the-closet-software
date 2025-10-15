@@ -64,22 +64,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           .then(({ error }) => {
             if (error) {
               console.error("Error inserting user:", error);
+              sendResponse({ user: null, error });
+            } else {
+              // Fetch and save the user ID from "users" table
+              supabase
+                .from("users")
+                .select("id")
+                .eq("auth_id", data.user?.id)
+                .then(({ data, error }) => {
+                  if (error) {
+                    console.error("Error fetching user ID:", error);
+                  } else if (data && data.length > 0) {
+                    const userId = data[0].id;
+                    chrome.storage.local.set({ userId });
+                  }
+                });
+              sendResponse({ user: data.user });
             }
           });
-        // Fetch and save the user ID from "users" table
-        supabase
-          .from("users")
-          .select("id")
-          .eq("auth_id", data.user?.id)
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("Error fetching user ID:", error);
-            } else if (data && data.length > 0) {
-              const userId = data[0].id;
-              chrome.storage.local.set({ userId });
-            }
-          });
-        sendResponse({ user: data.user });
       }
     });
     return true;
@@ -186,42 +188,86 @@ async function clearAllProducts() {
 
 // Handle image upload
 async function handleImageUpload(imageData: string, mimeType: string) {
-  const userId = (await chrome.storage.local.get(["userId"])).userId;
-  if (!userId) {
-    return { success: false, error: "User not authenticated" };
-  }
-  let imageId = (
-    await supabase
+  try {
+    if (!imageData || !mimeType) {
+      return { success: false, error: "Missing image data or mimeType" };
+    }
+
+    const userId = (await chrome.storage.local.get(["userId"])).userId;
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Insert DB row to reserve an id
+    const { data: inserted, error: insertError } = await supabase
       .from("user_images")
       .insert([{ user_id: userId, mime_type: mimeType }])
       .select("id")
-      .single()
-  ).data?.id;
-  // upload the image to supabase storage with the id as filename
-  const base64Data = imageData.split(",")[1];
-  const { error: uploadError } = await supabase.storage
-    .from("user-images")
-    .upload(
-      `${userId}/${imageId}`,
-      Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0)),
-      {
-        contentType: mimeType,
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting user_images row:", insertError);
+      return {
+        success: false,
+        error: `DB insert failed: ${insertError.message}`,
+      };
+    }
+    const imageId = inserted?.id;
+    if (!imageId) {
+      return { success: false, error: "Failed to obtain image id" };
+    }
+
+    // Prepare binary payload
+    let binary: Uint8Array;
+    try {
+      if (imageData.startsWith("data:")) {
+        const base64Data = imageData.split(",")[1];
+        if (!base64Data) throw new Error("Invalid data URL format");
+        binary = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+      } else {
+        const res = await fetch(imageData);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        binary = new Uint8Array(buf);
       }
-    );
-  if (uploadError) {
-    console.error("Error uploading image:", uploadError);
-    return { success: false, error: "Error uploading image" };
+    } catch (e: any) {
+      console.error("Error decoding image data:", e);
+      return { success: false, error: "Failed to decode image data" };
+    }
+
+    // Upload to storage (allow upsert in case of retry)
+    const { error: uploadError } = await supabase.storage
+      .from("user_uploads")
+      .upload(`${userId}/${imageId}`, binary, {
+        contentType: mimeType,
+        upsert: true as any, // tolerate re-uploads if supported by client
+      } as any);
+    if (uploadError) {
+      console.error("Error uploading image:", uploadError);
+      return {
+        success: false,
+        error: `Storage upload failed: ${uploadError.message}`,
+      };
+    }
+
+    // Update DB with storage path
+    const { error: updateError } = await supabase
+      .from("user_images")
+      .update({ image_url: `${userId}/${imageId}` })
+      .eq("id", imageId);
+    if (updateError) {
+      console.error("Error updating image URL:", updateError);
+      return {
+        success: false,
+        error: `DB update failed: ${updateError.message}`,
+      };
+    }
+
+    return { success: true, imageId };
+  } catch (error: any) {
+    console.error("handleImageUpload error:", error);
+    return { success: false, error: error?.message || String(error) };
   }
-  // update the image_url in user_images table
-  const { error: updateError } = await supabase
-    .from("user_images")
-    .update({ image_url: `${userId}/${imageId}` })
-    .eq("id", imageId);
-  if (updateError) {
-    console.error("Error updating image URL:", updateError);
-    return { success: false, error: "Error updating image URL" };
-  }
-  return { success: true };
 }
 
 async function injectTryonPopup(sender: chrome.runtime.MessageSender) {
