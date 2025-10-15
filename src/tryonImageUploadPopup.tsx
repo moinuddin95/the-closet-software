@@ -4,14 +4,26 @@ import "./tryonImageUploadPopup.css";
 
 export function TryonImageUploadPopup() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const onClose = () => {
     document.getElementById("closet-tryon-popup-root")!.style.display = "none";
   };
 
   function handleUploadClick() {
-    // Logic to be added later
+    // Send the selected file to the background script
+    if (!selectedFile) {
+      //TODO: replace alert with a toast notificationq
+      alert("Please select an image first.");
+      return;
+    }
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const fileData = reader.result as string; // data URL
+        console.log("file data received:", fileData?.slice(0, 64), "...");
+      };
+      reader.readAsDataURL(selectedFile);
+    }
   }
 
   function handleFileChange(event: Event) {

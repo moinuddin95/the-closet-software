@@ -393,9 +393,12 @@
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageEl ? imageEl.getAttribute("src") : "",
-      price: priceEl
-        ? priceEl.textContent.match(/\$\d+(\.\d{2})?/)?.[0]
-        : "N/A",
+      price: (function () {
+        const text = priceEl?.textContent ?? "";
+        const re = /\$\d+(\.\d{2})?/;
+        const m = re.exec(text);
+        return m ? m[0] : "N/A";
+      })(),
       url: window.location.href,
       site: site,
       timestamp: new Date().toISOString(),
@@ -525,26 +528,7 @@
       const productInfo = extractProductInfo();
       if (!productInfo) throw new Error("Failed to extract product info");
 
-      // Depricated manual storage handling
-      // // Get existing saved products
-      // const result = await chrome.storage.local.get(["savedProducts"]);
-      // const savedProducts = result.savedProducts || [];
-
-      // // Check if product is already saved
-      // const existingIndex = savedProducts.findIndex(
-      //   (p: ProductInfo) => p.url === productInfo.url
-      // );
-
-      // if (existingIndex >= 0) {
-      //   // Update existing product
-      //   savedProducts[existingIndex] = productInfo;
-      // } else {
-      //   // Add new product
-      //   savedProducts.unshift(productInfo);
-      // }
-
-      // // Save to storage
-      // await chrome.storage.local.set({ savedProducts: savedProducts });
+      // Save via background script
 
       const response = await chrome.runtime.sendMessage({
         action: "saveProduct",
@@ -607,23 +591,18 @@
         "block";
       return;
     }
-
-    // Create link tag to inject the compiled CSS
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = chrome.runtime.getURL("src/tryonImageUploadPopup.css");
-    document.head.appendChild(link);
-
-    // Create a container for the popup
+    // Ask background to inject CSS and module script using chrome.scripting
+    const resp = await chrome.runtime.sendMessage({
+      action: "injectTryonPopup",
+    });
+    if (!resp?.success) {
+      console.error("The Closet: Failed to inject try-on popup:", resp?.error);
+      return;
+    }
+    // Create a container for the popup (the module will render into it)
     const popupRoot = document.createElement("div");
     popupRoot.id = "closet-tryon-popup-root";
     document.body.appendChild(popupRoot);
-
-    // Create script tag to inject the compiled TSX bundle
-    const script = document.createElement("script");
-    script.src = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
-    script.type = "module";
-    document.body.appendChild(script);
   }
 
   /**
@@ -636,12 +615,14 @@
       if (response.user) {
         console.log("The Closet: User found:", response.user);
       } else {
-        chrome.runtime.sendMessage({ action: "signInAnonymously" }).then(
-          (res) => {
-            if (res.user) console.log("The Closet: Signed in anonymously:", res.user);
-            else console.error("The Closet: Anonymous sign-in failed:", res.error);
-          }
-        );
+        chrome.runtime
+          .sendMessage({ action: "signInAnonymously" })
+          .then((res) => {
+            if (res.user)
+              console.log("The Closet: Signed in anonymously:", res.user);
+            else
+              console.error("The Closet: Anonymous sign-in failed:", res.error);
+          });
       }
     });
 

@@ -57,12 +57,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (error) {
         sendResponse({ user: null, error });
       } else {
+        // Insert user into "users" table if not exists
         supabase
           .from("users")
           .insert([{ auth_id: data.user?.id }])
           .then(({ error }) => {
             if (error) {
               console.error("Error inserting user:", error);
+            }
+          });
+        // Fetch and save the user ID from "users" table
+        supabase
+          .from("users")
+          .select("id")
+          .eq("auth_id", data.user?.id)
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("Error fetching user ID:", error);
+            } else if (data && data.length > 0) {
+              const userId = data[0].id;
+              chrome.storage.local.set({ userId });
             }
           });
         sendResponse({ user: data.user });
@@ -89,6 +103,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     });
     return true;
+  }
+
+  // Messages for image upload functionality
+  if (request.action === "uploadImage") {
+    const { image, mimeType } = request;
+    console.log("Received image upload request:", {
+      hasImage: !!image,
+      mimeType,
+    });
+    handleImageUpload(image, mimeType)
+      .then((response) => sendResponse(response))
+      .catch((error) =>
+        sendResponse({ success: false, error: error?.message || String(error) })
+      );
+    return true; // Keep message channel open for async response
+  }
+
+  // Request to inject try-on popup assets via chrome.scripting
+  if (request.action === "injectTryonPopup") {
+    injectTryonPopup(sender)
+      .then((response) => sendResponse(response))
+      .catch((error) =>
+        sendResponse({ success: false, error: error?.message || String(error) })
+      );
+    return true; // Keep channel open for async response
   }
 });
 
@@ -118,6 +157,7 @@ async function handleSaveProduct(product: ProductInfo) {
   }
 }
 
+// Handle removing a product
 async function handleRemoveProduct(product: ProductInfo) {
   try {
     const result = await chrome.storage.local.get(["savedProducts"]);
@@ -133,6 +173,7 @@ async function handleRemoveProduct(product: ProductInfo) {
   }
 }
 
+// Handle clearing all products
 async function clearAllProducts() {
   try {
     await chrome.storage.local.set({ savedProducts: [] });
@@ -140,6 +181,85 @@ async function clearAllProducts() {
   } catch (error: any) {
     console.error("Error clearing all products:", error);
     return { success: false, error: error.message };
+  }
+}
+
+// Handle image upload
+async function handleImageUpload(imageData: string, mimeType: string) {
+  const userId = (await chrome.storage.local.get(["userId"])).userId;
+  if (!userId) {
+    return { success: false, error: "User not authenticated" };
+  }
+  let imageId = (
+    await supabase
+      .from("user_images")
+      .insert([{ user_id: userId, mime_type: mimeType }])
+      .select("id")
+      .single()
+  ).data?.id;
+  // upload the image to supabase storage with the id as filename
+  const base64Data = imageData.split(",")[1];
+  const { error: uploadError } = await supabase.storage
+    .from("user-images")
+    .upload(
+      `${userId}/${imageId}`,
+      Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0)),
+      {
+        contentType: mimeType,
+      }
+    );
+  if (uploadError) {
+    console.error("Error uploading image:", uploadError);
+    return { success: false, error: "Error uploading image" };
+  }
+  // update the image_url in user_images table
+  const { error: updateError } = await supabase
+    .from("user_images")
+    .update({ image_url: `${userId}/${imageId}` })
+    .eq("id", imageId);
+  if (updateError) {
+    console.error("Error updating image URL:", updateError);
+    return { success: false, error: "Error updating image URL" };
+  }
+  return { success: true };
+}
+
+async function injectTryonPopup(sender: chrome.runtime.MessageSender) {
+  const tabId = sender.tab?.id;
+  if (!tabId) {
+    return { success: false, error: "No active tab id found" };
+  }
+  try {
+    // Ensure CSS is applied
+    await chrome.scripting.insertCSS({
+      target: { tabId },
+      files: ["src/tryonImageUploadPopup.css"],
+    });
+
+    // Inject a module script tag so ESM bundles load correctly
+    const moduleUrl = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (url) => {
+        try {
+          // Avoid duplicate injection
+          if (document.querySelector('script[data-closet-tryon="1"]')) return;
+          const s = document.createElement("script");
+          s.type = "module";
+          s.setAttribute("data-closet-tryon", "1");
+          s.src = url;
+          (document.head || document.documentElement).appendChild(s);
+        } catch (e) {
+          // surface errors to devtools
+          console.error("The Closet: Failed to append module script", e);
+        }
+      },
+      args: [moduleUrl],
+    });
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error injecting try-on popup:", e);
+    return { success: false, error: e?.message || String(e) };
   }
 }
 
