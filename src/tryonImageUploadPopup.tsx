@@ -4,26 +4,82 @@ import "./tryonImageUploadPopup.css";
 
 export function TryonImageUploadPopup() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
   const onClose = () => {
     document.getElementById("closet-tryon-popup-root")!.style.display = "none";
+    setSelectedFile(null);
+    setUploadStatus({ type: null, message: "" });
   };
 
   function handleUploadClick() {
     // Send the selected file to the background script
     if (!selectedFile) {
-      //TODO: replace alert with a toast notificationq
-      alert("Please select an image first.");
+      setUploadStatus({
+        type: "error",
+        message: "Please select an image first.",
+      });
       return;
     }
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const fileData = reader.result as string; // data URL
-        console.log("file data received:", fileData?.slice(0, 64), "...");
+
+    setIsUploading(true);
+    setUploadStatus({ type: null, message: "" });
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const fileData = reader.result as string; // data URL
+      const mimeType = selectedFile.type;
+
+      // Send message to content script via custom DOM event
+      const event = new CustomEvent("closet-upload-image", {
+        detail: { image: fileData, mimeType },
+      });
+      document.dispatchEvent(event);
+
+      // Listen for response
+      const responseHandler = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        const { success, error } = customEvent.detail;
+
+        setIsUploading(false);
+
+        if (success) {
+          setUploadStatus({
+            type: "success",
+            message: "Image uploaded successfully!",
+          });
+          // Clear file after successful upload
+          setTimeout(() => {
+            setSelectedFile(null);
+            setUploadStatus({ type: null, message: "" });
+          }, 2000);
+        } else {
+          setUploadStatus({
+            type: "error",
+            message: error || "Upload failed. Please try again.",
+          });
+        }
+
+        // Remove listener after handling
+        document.removeEventListener("closet-upload-response", responseHandler);
       };
-      reader.readAsDataURL(selectedFile);
-    }
+
+      document.addEventListener("closet-upload-response", responseHandler);
+    };
+
+    reader.onerror = () => {
+      setIsUploading(false);
+      setUploadStatus({
+        type: "error",
+        message: "Failed to read file. Please try again.",
+      });
+    };
+
+    reader.readAsDataURL(selectedFile);
   }
 
   function handleFileChange(event: Event) {
@@ -83,6 +139,17 @@ export function TryonImageUploadPopup() {
               </>
             )}
           </div>
+          {uploadStatus.type && (
+            <div
+              className={`tryon-status-message ${
+                uploadStatus.type === "success"
+                  ? "tryon-status-success"
+                  : "tryon-status-error"
+              }`}
+            >
+              {uploadStatus.message}
+            </div>
+          )}
           <div className="tryon-popup-actions">
             <button className="tryon-btn tryon-cancel-btn" onClick={onClose}>
               Cancel
@@ -90,9 +157,9 @@ export function TryonImageUploadPopup() {
             <button
               className="tryon-btn tryon-upload-btn"
               onClick={handleUploadClick}
-              disabled={!selectedFile}
+              disabled={!selectedFile || isUploading}
             >
-              Upload
+              {isUploading ? "Uploading..." : "Upload"}
             </button>
           </div>
         </div>

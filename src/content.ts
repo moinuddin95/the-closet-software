@@ -603,6 +603,44 @@
     const popupRoot = document.createElement("div");
     popupRoot.id = "closet-tryon-popup-root";
     document.body.appendChild(popupRoot);
+
+    // Set up listener for image upload events from the popup
+    setupImageUploadListener();
+  }
+
+  /**
+   * Sets up listener for image upload events from the popup.
+   * The popup sends custom DOM events, which we relay to the background script.
+   */
+  function setupImageUploadListener() {
+    document.addEventListener("closet-upload-image", async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { image, mimeType } = customEvent.detail;
+
+      console.log("The Closet: Received image upload request from popup");
+
+      try {
+        // Send to background script
+        const response = await chrome.runtime.sendMessage({
+          action: "uploadImage",
+          image,
+          mimeType,
+        });
+
+        // Send response back to popup
+        const responseEvent = new CustomEvent("closet-upload-response", {
+          detail: response,
+        });
+        document.dispatchEvent(responseEvent);
+      } catch (error: any) {
+        console.error("The Closet: Error uploading image:", error);
+        // Send error response back to popup
+        const responseEvent = new CustomEvent("closet-upload-response", {
+          detail: { success: false, error: error.message || "Upload failed" },
+        });
+        document.dispatchEvent(responseEvent);
+      }
+    });
   }
 
   /**
