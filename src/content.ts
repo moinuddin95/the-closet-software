@@ -577,6 +577,14 @@
 
   async function handleTryonClick(event: Event) {
     event.preventDefault();
+    const resp = await chrome.runtime.sendMessage({
+      action: "getUserImageUrl",
+    });
+    const userImageUrl = resp?.userImageUrl;
+    if (userImageUrl) {
+      // Optionally, you could trigger a different flow here (e.g., start try-on immediately)
+      return;
+    }
     await injectTryonImageUploadPopup();
   }
 
