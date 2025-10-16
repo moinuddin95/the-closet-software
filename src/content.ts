@@ -603,7 +603,7 @@
         return;
       }
       // No user image yet; inject upload popup
-      await injectTryonImageUploadPopup();
+      injectTryonImageUploadPopup();
     } catch (e) {
       console.error("The Closet: handleTryonClick error:", e);
     }
@@ -613,6 +613,7 @@
     const product = extractProductInfo();
     if (!product) throw new Error("Failed to extract product info");
     // Send to background script
+    console.log("The Closet: Sending product for try-on processing", { product });
     const response = await chrome.runtime.sendMessage({
       action: "processTryon",
       product,
@@ -623,7 +624,7 @@
    * Inject the try-on image upload popup into the page.
    * @returns {void}
    */
-  async function injectTryonImageUploadPopup() {
+  function injectTryonImageUploadPopup() {
     // Check if popup already exists
     if (document.getElementById("closet-tryon-popup-root")) {
       document.getElementById("closet-tryon-popup-root")!.style.display =
