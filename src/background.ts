@@ -121,14 +121,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       );
     return true; // Keep message channel open for async response
   }
-  if (request.action === "getUserImageUrl") {
-    chrome.storage.local.get(["userImageUrl"], (result) => {
-      sendResponse({ userImageUrl: result.userImageUrl || null });
+  if (request.action === "getuserImageId") {
+    chrome.storage.local.get(["userImageId"], (result) => {
+      sendResponse({ userImageId: result.userImageId || null });
     });
     return true;
   }
 
-  // No-op: try-on popup injection is now handled entirely by the content script.
+  // Message for try-on functionality
+  if (request.action === "processTryon") {
+    processTryon(request.product)
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
+
 });
 
 // Handle saving a product
@@ -261,13 +268,47 @@ async function handleImageUpload(imageData: string, mimeType: string) {
       };
     }
 
-    chrome.storage.local.set({ userImageUrl: `${userId}/${imageId}` });
+    chrome.storage.local.set({ userImageId: `${imageId}` });
 
     return { success: true, imageId };
   } catch (error: any) {
     console.error("handleImageUpload error:", error);
     return { success: false, error: error?.message || String(error) };
   }
+}
+
+async function processTryon(product: ProductInfo) {
+  // store the product in the clothing_items table
+  const { clothing_id, error } = await saveTryonProduct(product);
+  if (error) {
+    throw new Error(`Failed to save product: ${error}`);
+  }
+  // request the edge function to process the clothing id and user image id
+  try {
+    const userImageId = await chrome.storage.local.get(["userImageId"]);
+    const response = await supabase.functions.invoke("process-tryon", {
+      body: { clothing_id, user_image_id: userImageId.userImageId },
+    });
+    console.log("Try-on function response:", response);
+  } catch (error) {
+    console.error("Error processing try-on:", error);
+  }
+}
+
+async function saveTryonProduct(product: ProductInfo) {
+  // get the userId from storage
+  const result = await chrome.storage.local.get(["userId"]);
+  const userId = result.userId;
+  // store the product in the clothing_items table
+  const { data, error } = await supabase
+    .from("clothing_items")
+    .insert([{ user_id: userId, title: product.title, image_url: product.image }])
+    .select("id")
+    .single();
+  if (error){
+    return { error: `Error inserting clothing item: ${error.message}` };
+  }
+  return { clothing_id: data.id };
 }
 
 // Listen for storage changes

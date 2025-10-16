@@ -577,15 +577,46 @@
 
   async function handleTryonClick(event: Event) {
     event.preventDefault();
-    const resp = await chrome.runtime.sendMessage({
-      action: "getUserImageUrl",
-    });
-    const userImageUrl = resp?.userImageUrl;
-    if (userImageUrl) {
-      // Optionally, you could trigger a different flow here (e.g., start try-on immediately)
-      return;
+    try {
+      let userImageId: string | null | undefined = undefined;
+      try {
+        const resp = await chrome.runtime.sendMessage({
+          action: "getuserImageId",
+        });
+        userImageId = resp?.userImageId;
+      } catch (e) {
+        console.error(
+          "The Closet: Failed to get userImageId; will show upload popup as fallback.",
+          e
+        );
+      }
+
+      if (userImageId) {
+        try {
+          // If a user image is already present, proceed with try-on flow without showing upload UI
+          await processTryon();
+        } catch (e) {
+          console.error("The Closet: processTryon failed:", e);
+          // Optional: surface a user message or fallback to upload
+          // await injectTryonImageUploadPopup();
+        }
+        return;
+      }
+      // No user image yet; inject upload popup
+      await injectTryonImageUploadPopup();
+    } catch (e) {
+      console.error("The Closet: handleTryonClick error:", e);
     }
-    await injectTryonImageUploadPopup();
+  }
+
+  async function processTryon() {
+    const product = extractProductInfo();
+    if (!product) throw new Error("Failed to extract product info");
+    // Send to background script
+    const response = await chrome.runtime.sendMessage({
+      action: "processTryon",
+      product,
+    });
   }
 
   /**
