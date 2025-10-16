@@ -618,6 +618,10 @@
       action: "processTryon",
       product,
     });
+    if (!response.success) {
+      throw new Error("Try-on processing failed: " + response.error);
+    }
+    console.log("The Closet: Try-on processing successful", response);
   }
 
   /**

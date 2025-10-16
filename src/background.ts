@@ -245,8 +245,8 @@ async function handleImageUpload(imageData: string, mimeType: string) {
       .from("user_uploads")
       .upload(`${userId}/${imageId}`, binary, {
         contentType: mimeType,
-        upsert: true as any, // tolerate re-uploads if supported by client
-      } as any);
+        upsert: true, // tolerate re-uploads if supported by client
+      });
     if (uploadError) {
       console.error("Error uploading image:", uploadError);
       return {
@@ -286,12 +286,15 @@ async function processTryon(product: ProductInfo) {
   // request the edge function to process the clothing id and user image id
   try {
     const userImageId = await chrome.storage.local.get(["userImageId"]);
-    const response = await supabase.functions.invoke("process-tryon", {
+    const {data, error} = await supabase.functions.invoke("tryon", {
       body: { clothing_id, user_image_id: userImageId.userImageId },
     });
-    console.log("Try-on function response:", response);
+    if (error) {
+      throw new Error(`Edge function error: ${error.message}`);
+    }
+    return data;
   } catch (error) {
-    console.error("Error processing try-on:", error);
+    throw new Error(`Try-on function invocation failed: ${error}`);
   }
 }
 
