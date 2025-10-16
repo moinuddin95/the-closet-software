@@ -121,16 +121,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       );
     return true; // Keep message channel open for async response
   }
-
-  // Request to inject try-on popup assets via chrome.scripting
-  if (request.action === "injectTryonPopup") {
-    injectTryonPopup(sender)
-      .then((response) => sendResponse(response))
-      .catch((error) =>
-        sendResponse({ success: false, error: error?.message || String(error) })
-      );
-    return true; // Keep channel open for async response
+  if (request.action === "getUserImageUrl") {
+    chrome.storage.local.get(["userImageUrl"], (result) => {
+      sendResponse({ userImageUrl: result.userImageUrl || null });
+    });
+    return true;
   }
+
+  // No-op: try-on popup injection is now handled entirely by the content script.
 });
 
 // Handle saving a product
@@ -263,49 +261,12 @@ async function handleImageUpload(imageData: string, mimeType: string) {
       };
     }
 
+    chrome.storage.local.set({ userImageUrl: `${userId}/${imageId}` });
+
     return { success: true, imageId };
   } catch (error: any) {
     console.error("handleImageUpload error:", error);
     return { success: false, error: error?.message || String(error) };
-  }
-}
-
-async function injectTryonPopup(sender: chrome.runtime.MessageSender) {
-  const tabId = sender.tab?.id;
-  if (!tabId) {
-    return { success: false, error: "No active tab id found" };
-  }
-  try {
-    // Ensure CSS is applied
-    await chrome.scripting.insertCSS({
-      target: { tabId },
-      files: ["src/tryonImageUploadPopup.css"],
-    });
-
-    // Inject a module script tag so ESM bundles load correctly
-    const moduleUrl = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      func: (url) => {
-        try {
-          // Avoid duplicate injection
-          if (document.querySelector('script[data-closet-tryon="1"]')) return;
-          const s = document.createElement("script");
-          s.type = "module";
-          s.setAttribute("data-closet-tryon", "1");
-          s.src = url;
-          (document.head || document.documentElement).appendChild(s);
-        } catch (e) {
-          // surface errors to devtools
-          console.error("The Closet: Failed to append module script", e);
-        }
-      },
-      args: [moduleUrl],
-    });
-    return { success: true };
-  } catch (e: any) {
-    console.error("Error injecting try-on popup:", e);
-    return { success: false, error: e?.message || String(e) };
   }
 }
 

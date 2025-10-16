@@ -591,18 +591,28 @@
         "block";
       return;
     }
-    // Ask background to inject CSS and module script using chrome.scripting
-    const resp = await chrome.runtime.sendMessage({
-      action: "injectTryonPopup",
-    });
-    if (!resp?.success) {
-      console.error("The Closet: Failed to inject try-on popup:", resp?.error);
-      return;
-    }
     // Create a container for the popup (the module will render into it)
     const popupRoot = document.createElement("div");
     popupRoot.id = "closet-tryon-popup-root";
     document.body.appendChild(popupRoot);
+
+    // Inject CSS
+    if (!document.querySelector('link[data-closet-tryon-css="1"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = chrome.runtime.getURL("src/tryonImageUploadPopup.css");
+      link.setAttribute("data-closet-tryon-css", "1");
+      document.head.appendChild(link);
+    }
+
+    // Inject module script for the popup UI
+    if (!document.querySelector('script[data-closet-tryon="1"]')) {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
+      script.setAttribute("data-closet-tryon", "1");
+      document.body.appendChild(script);
+    }
 
     // Set up listener for image upload events from the popup
     setupImageUploadListener();
