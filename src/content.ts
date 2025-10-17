@@ -710,6 +710,7 @@
       const li = document.createElement("li");
       li.className = "a-spacing-small item imageThumbnail a-declarative";
       li.setAttribute("data-closet-tryon", "1"); // Mark as our injected element
+      li.style.position = "relative"; // For badge positioning
       
       const span = document.createElement("span");
       span.className = "a-list-item";
@@ -731,11 +732,27 @@
       img.style.maxHeight = "40px"; // Match Amazon thumbnail size
       img.style.maxWidth = "40px";
       
+      // Add a small badge to indicate this is a try-on result
+      const badge = document.createElement("span");
+      badge.textContent = "Try-On";
+      badge.style.position = "absolute";
+      badge.style.top = "2px";
+      badge.style.left = "2px";
+      badge.style.backgroundColor = "#667eea";
+      badge.style.color = "white";
+      badge.style.fontSize = "8px";
+      badge.style.padding = "2px 4px";
+      badge.style.borderRadius = "3px";
+      badge.style.fontWeight = "bold";
+      badge.style.zIndex = "10";
+      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      
       spanInnerInner.appendChild(input);
       spanInnerInner.appendChild(img);
       spanInner.appendChild(spanInnerInner);
       span.appendChild(spanInner);
       li.appendChild(span);
+      li.appendChild(badge);
       
       // Add click handler to show the try-on image in the main viewer
       li.addEventListener("click", () => {
@@ -750,6 +767,12 @@
     }
 
     // Fallback: create a simple image element for non-Amazon sites
+    const container = document.createElement("div");
+    container.style.position = "relative";
+    container.style.display = "inline-block";
+    container.style.marginTop = "10px";
+    container.setAttribute("data-closet-tryon", "1");
+    
     const img = document.createElement("img");
     img.src = imageUrl;
     img.alt = "Virtual Try-On Result";
@@ -757,10 +780,27 @@
     img.style.maxWidth = "100%";
     img.style.border = "2px solid #667eea";
     img.style.borderRadius = "8px";
-    img.style.marginTop = "10px";
-    img.setAttribute("data-closet-tryon", "1");
+    img.style.display = "block";
     
-    return img;
+    // Add a badge to indicate this is a try-on result
+    const badge = document.createElement("span");
+    badge.textContent = "Virtual Try-On Result";
+    badge.style.position = "absolute";
+    badge.style.top = "10px";
+    badge.style.left = "10px";
+    badge.style.backgroundColor = "#667eea";
+    badge.style.color = "white";
+    badge.style.fontSize = "12px";
+    badge.style.padding = "4px 8px";
+    badge.style.borderRadius = "4px";
+    badge.style.fontWeight = "bold";
+    badge.style.zIndex = "10";
+    badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    
+    container.appendChild(img);
+    container.appendChild(badge);
+    
+    return container;
   }
 
   /**
