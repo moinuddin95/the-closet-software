@@ -648,9 +648,23 @@
     for (const selector of carouselSelectors) {
       const element = document.querySelector(selector);
       if (element) {
+        // Try to use parent element ID, otherwise check for valid container selector
+        let container = thumbnailContainerSelectors[0];
+        if (element.parentElement?.id) {
+          container = `#${element.parentElement.id}`;
+        } else {
+          // Find first valid container selector
+          for (const containerSelector of thumbnailContainerSelectors) {
+            if (document.querySelector(containerSelector)) {
+              container = containerSelector;
+              break;
+            }
+          }
+        }
+        
         return {
           thumbnailList: selector,
-          container: element.parentElement?.id ? `#${element.parentElement.id}` : thumbnailContainerSelectors[0]
+          container: container
         };
       }
     }
@@ -744,8 +758,8 @@
     // Add click handler to show the try-on image in the main viewer
     imgLink.addEventListener('click', (e) => {
       e.preventDefault();
-      const mainImage = document.querySelector('#landingImage, #imgTagWrapperId img') as HTMLImageElement;
-      if (mainImage) {
+      const mainImage = document.querySelector('#landingImage, #imgTagWrapperId img');
+      if (mainImage && mainImage instanceof HTMLImageElement) {
         mainImage.src = tryonImageUrl;
       }
     });

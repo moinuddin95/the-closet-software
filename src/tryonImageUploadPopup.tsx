@@ -20,33 +20,44 @@ export function TryonImageUploadPopup() {
       // Convert the file to a data URL for storage
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const dataUrl = reader.result as string;
-        
-        // In a real implementation, this would call an API to generate the try-on image
-        // For now, we'll use the uploaded image as a placeholder for the try-on result
-        const tryonImageUrl = dataUrl;
-        
-        // Save the try-on image URL
-        const response = await chrome.runtime.sendMessage({
-          action: 'saveTryonImage',
-          tryonImageUrl: tryonImageUrl,
-          productUrl: window.location.href
-        });
+        try {
+          const dataUrl = reader.result as string;
+          
+          // In a real implementation, this would call an API to generate the try-on image
+          // For now, we'll use the uploaded image as a placeholder for the try-on result
+          const tryonImageUrl = dataUrl;
+          
+          // Save the try-on image URL
+          const response = await chrome.runtime.sendMessage({
+            action: 'saveTryonImage',
+            tryonImageUrl: tryonImageUrl,
+            productUrl: window.location.href
+          });
 
-        if (response.success) {
-          console.log('The Closet: Try-on image saved successfully');
-          
-          // Dispatch a custom event to notify content script
-          window.dispatchEvent(new CustomEvent('closet-tryon-uploaded', {
-            detail: { tryonImageUrl: tryonImageUrl }
-          }));
-          
-          onClose();
-        } else {
-          console.error('The Closet: Failed to save try-on image:', response.error);
-          alert('Failed to save try-on image. Please try again.');
+          if (response.success) {
+            console.log('The Closet: Try-on image saved successfully');
+            
+            // Dispatch a custom event to notify content script
+            window.dispatchEvent(new CustomEvent('closet-tryon-uploaded', {
+              detail: { tryonImageUrl: tryonImageUrl }
+            }));
+            
+            onClose();
+          } else {
+            console.error('The Closet: Failed to save try-on image:', response.error);
+            alert('Failed to save try-on image. Please try again.');
+          }
+        } catch (error) {
+          console.error('The Closet: Error in FileReader callback:', error);
+          alert('Error uploading try-on image. Please try again.');
+        } finally {
+          setIsUploading(false);
         }
-        
+      };
+      
+      reader.onerror = () => {
+        console.error('The Closet: FileReader error');
+        alert('Error reading file. Please try again.');
         setIsUploading(false);
       };
       
