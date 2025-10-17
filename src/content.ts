@@ -214,6 +214,11 @@
     site: string;
     timestamp: string;
   }
+  
+  // Constants for styling
+  const CLOSET_BRAND_COLOR = "#667eea";
+  const CLOSET_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  
   const PRODUCT_PATTERNS: Record<string, ProductPatternBySiteExtension> = {
     amazon: {
       com: {
@@ -664,6 +669,32 @@
     }
   }
   /**
+   * Creates a badge element to label try-on images.
+   * @param {string} text - The text to display on the badge.
+   * @param {object} position - Optional positioning styles (top, left, fontSize, padding).
+   * @returns {HTMLSpanElement} The created badge element.
+   */
+  function createTryonBadge(
+    text: string,
+    position: { top?: string; left?: string; fontSize?: string; padding?: string } = {}
+  ) {
+    const badge = document.createElement("span");
+    badge.textContent = text;
+    badge.style.position = "absolute";
+    badge.style.top = position.top || "2px";
+    badge.style.left = position.left || "2px";
+    badge.style.backgroundColor = CLOSET_BRAND_COLOR;
+    badge.style.color = "white";
+    badge.style.fontSize = position.fontSize || "8px";
+    badge.style.padding = position.padding || "2px 4px";
+    badge.style.borderRadius = "3px";
+    badge.style.fontWeight = "bold";
+    badge.style.zIndex = "10";
+    badge.style.fontFamily = CLOSET_FONT_FAMILY;
+    return badge;
+  }
+
+  /**
    * Finds the Amazon image carousel/gallery container element.
    * Tries multiple selectors to support different Amazon page layouts.
    * @returns {HTMLElement | null} The carousel container element, or null if not found.
@@ -733,19 +764,7 @@
       img.style.maxWidth = "40px";
       
       // Add a small badge to indicate this is a try-on result
-      const badge = document.createElement("span");
-      badge.textContent = "Try-On";
-      badge.style.position = "absolute";
-      badge.style.top = "2px";
-      badge.style.left = "2px";
-      badge.style.backgroundColor = "#667eea";
-      badge.style.color = "white";
-      badge.style.fontSize = "8px";
-      badge.style.padding = "2px 4px";
-      badge.style.borderRadius = "3px";
-      badge.style.fontWeight = "bold";
-      badge.style.zIndex = "10";
-      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      const badge = createTryonBadge("Try-On");
       
       spanInnerInner.appendChild(input);
       spanInnerInner.appendChild(img);
@@ -778,24 +797,17 @@
     img.alt = "Virtual Try-On Result";
     img.className = "closet-tryon-image";
     img.style.maxWidth = "100%";
-    img.style.border = "2px solid #667eea";
+    img.style.border = `2px solid ${CLOSET_BRAND_COLOR}`;
     img.style.borderRadius = "8px";
     img.style.display = "block";
     
     // Add a badge to indicate this is a try-on result
-    const badge = document.createElement("span");
-    badge.textContent = "Virtual Try-On Result";
-    badge.style.position = "absolute";
-    badge.style.top = "10px";
-    badge.style.left = "10px";
-    badge.style.backgroundColor = "#667eea";
-    badge.style.color = "white";
-    badge.style.fontSize = "12px";
-    badge.style.padding = "4px 8px";
-    badge.style.borderRadius = "4px";
-    badge.style.fontWeight = "bold";
-    badge.style.zIndex = "10";
-    badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    const badge = createTryonBadge("Virtual Try-On Result", {
+      top: "10px",
+      left: "10px",
+      fontSize: "12px",
+      padding: "4px 8px"
+    });
     
     container.appendChild(img);
     container.appendChild(badge);
