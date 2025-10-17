@@ -131,7 +131,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Message for try-on functionality
   if (request.action === "processTryon") {
     processTryon(request.product)
-      .then(() => sendResponse({ success: true }))
+      .then((data) => sendResponse({ success: true, ...data }))
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }

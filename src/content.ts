@@ -267,17 +267,7 @@
         priceSelector: '[data-buy-box-region="price"]',
         insertTarget: "h1",
       },
-    },
-    generic: {
-      com: {
-        urlPattern: /.*/,
-        titleSelector: 'h1, [itemprop="name"]',
-        imageSelector:
-          '[itemprop="image"], .product-image img, img[alt*="product"]',
-        priceSelector: '[itemprop="price"], .price, .product-price',
-        insertTarget: "h1",
-      },
-    },
+    }
   };
   /**
    * Detects the current e-commerce site based on the window's hostname.
@@ -291,7 +281,7 @@
     if (hostname.includes("walmart")) return "walmart";
     if (hostname.includes("target")) return "target";
     if (hostname.includes("etsy")) return "etsy";
-    return "generic";
+    return "n/a";
   }
   /**
    * Gets the site extension (e.g., 'com', 'ca') based on the hostname.
@@ -312,9 +302,10 @@
    */
   function getSitePattern() {
     let siteExtension = getSiteExtension();
-    if (siteExtension === "n/a") return null;
-
     const site = getSiteIdentifier();
+
+    if (siteExtension === "n/a" || site === "n/a") return null;
+
     const patternsWithExtensions = PRODUCT_PATTERNS[site];
     // Switch to .com if the existing site extension pattern doesn't exist
     siteExtension =
@@ -338,8 +329,9 @@
   }
 
   /**
-   * Checks if the current page is a product page.
-   * @returns {boolean} True if the current page is a product page based on URL and DOM patterns.
+   * Checks if the current page is a product page. 
+   * The product page is determined by matching URL patterns and checking for title and image DOM elements.
+   * @returns {boolean} 
    */
   function isProductPage() {
     const pattern = getSitePattern();
@@ -379,7 +371,8 @@
 
   /**
    * Extracts product information from the page.
-   * @returns {ProductInfo}
+   * Parses the DOM content to retrieve product details.
+   * @returns {ProductInfo | null}
    */
   function extractProductInfo() {
     const site = getSiteIdentifier();
@@ -405,6 +398,10 @@
     } as ProductInfo;
   }
 
+  /**
+   * Injects the button container with id "closet-btns-container" as a next sibling to the insertTarget element.
+   * @returns {void}
+   */
   function injectButtonsContainer() {
     // Check if container already exists
     if (document.getElementById("closet-btns-container")) {
@@ -438,8 +435,9 @@
   }
 
   /**
-   * Injects the "Save Secretly" button into the product page.
-   * DOM Location is sibling to insertTarget in PRODUCT_PATTERNS.
+   * Injects a button with id "closet-save-btn" into the product page.
+   * DOM Location is child to the button container with id "closet-btns-container".
+   * Click event is handled by handleSaveClick.
    * @returns {void}
    */
   function injectSaveButton() {
@@ -471,6 +469,12 @@
     console.log("The Closet: Save button injected successfully");
   }
 
+  /**
+   * Injects a button `#closet-tryon-btn` into the product page.  
+   * DOM Location is child to the button container `#closet-btns-container`.  
+   * Click event is handled by `handleTryonClick`.
+   * @returns {void}
+   */
   function injectTryonButton() {
     // Check if button already exists
     if (document.getElementById("closet-tryon-btn")) {
@@ -504,7 +508,9 @@
   }
 
   /**
-   * Handle save button click event.
+   * Gets the product info by calling `extractProductInfo()`.  
+   * Sends a message to the background script to save the current product.  
+   * Message: `{ action: "saveProduct", product: ProductInfo }`  
    * @param {*} event
    * @return {Promise<void>}
    */
@@ -574,7 +580,13 @@
       }, 2000);
     }
   }
-
+  /**
+   * Checks if userImageId exists by sending a message to the background script.  
+   * Message: `{ action: "getuserImageId" }`  
+   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.  
+   * @param event The click event.
+   * @returns {Promise<void>}
+   */
   async function handleTryonClick(event: Event) {
     event.preventDefault();
     try {
@@ -608,7 +620,12 @@
       console.error("The Closet: handleTryonClick error:", e);
     }
   }
-
+  /**
+   * Processes the try-on request by extracting product info via `extractProductInfo()`.  
+   * Sends the product info to the background script for processing.  
+   * Message: `{ action: "processTryon", product: ProductInfo }`  
+   * @returns {Promise<void>}
+   */
   async function processTryon() {
     const product = extractProductInfo();
     if (!product) throw new Error("Failed to extract product info");
@@ -621,11 +638,14 @@
     if (!response.success) {
       throw new Error("Try-on processing failed: " + response.error);
     }
-    console.log("The Closet: Try-on processing successful", response);
+    console.log("The Closet: Try-on processing successful", response.publicUrl);
   }
 
   /**
-   * Inject the try-on image upload popup into the page.
+   * Injects the popup in container `#closet-tryon-popup-root`.  
+   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.  
+   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.  
+   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.  
    * @returns {void}
    */
   function injectTryonImageUploadPopup() {
@@ -663,8 +683,12 @@
   }
 
   /**
-   * Sets up listener for image upload events from the popup.
-   * The popup sends custom DOM events, which we relay to the background script.
+   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.  
+   * Event.detail should contain `{ image: string, mimeType: string }`.  
+   * On receiving the event, it sends the image data to the background script for uploading.  
+   * Message: `{ action: "uploadImage", image: string, mimeType: string }`  
+   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.  
+   * @returns {void}
    */
   function setupImageUploadListener() {
     document.addEventListener("closet-upload-image", async (event: Event) => {
