@@ -625,6 +625,170 @@
   }
 
   /**
+   * Gets the selectors for Amazon's image carousel based on the current page structure.
+   * Amazon has different DOM structures for different product types.
+   * @returns {Object} Object containing carousel container and thumbnail list selectors
+   */
+  function getAmazonImageCarouselSelectors() {
+    // Multiple possible selectors for Amazon's image carousel
+    const carouselSelectors = [
+      '#altImages ul.a-unordered-list', // Main thumbnail list
+      '#imageBlock_feature_div ul', // Alternative thumbnail container
+      '.a-carousel-viewport ul', // Carousel viewport
+      '#imageBlock ul' // Fallback image block
+    ];
+
+    const thumbnailContainerSelectors = [
+      '#altImages',
+      '#imageBlock_feature_div',
+      '.imageThumbnails'
+    ];
+
+    // Try to find the carousel container
+    for (const selector of carouselSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        return {
+          thumbnailList: selector,
+          container: element.parentElement?.id ? `#${element.parentElement.id}` : thumbnailContainerSelectors[0]
+        };
+      }
+    }
+
+    // Fallback to first selector if none found
+    return {
+      thumbnailList: carouselSelectors[0],
+      container: thumbnailContainerSelectors[0]
+    };
+  }
+
+  /**
+   * Injects the try-on image into Amazon's product image carousel.
+   * @param {string} tryonImageUrl - The URL of the try-on image to inject
+   * @returns {boolean} True if injection was successful
+   */
+  function injectTryonImageIntoCarousel(tryonImageUrl: string) {
+    const site = getSiteIdentifier();
+    
+    // Currently only supports Amazon
+    if (site !== 'amazon') {
+      console.log('The Closet: Try-on image injection currently only supports Amazon');
+      return false;
+    }
+
+    // Check if try-on image is already injected
+    if (document.getElementById('closet-tryon-image-thumb')) {
+      console.log('The Closet: Try-on image already injected');
+      return true;
+    }
+
+    const selectors = getAmazonImageCarouselSelectors();
+    const thumbnailList = document.querySelector(selectors.thumbnailList);
+
+    if (!thumbnailList) {
+      console.log('The Closet: Could not find image carousel to inject try-on image');
+      return false;
+    }
+
+    // Create a thumbnail item that matches Amazon's structure
+    const thumbnailItem = document.createElement('li');
+    thumbnailItem.id = 'closet-tryon-image-thumb';
+    thumbnailItem.className = 'a-spacing-small item imageThumbnail a-declarative';
+    
+    // Create the inner structure matching Amazon's thumbnail format
+    const span = document.createElement('span');
+    span.className = 'a-list-item';
+    
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'a-button-thumbnail a-button-toggle';
+    
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'a-button-inner';
+    
+    const imgLink = document.createElement('a');
+    imgLink.className = 'a-button-text';
+    imgLink.href = 'javascript:void(0)';
+    
+    const img = document.createElement('img');
+    img.alt = 'Virtual Try-On Result';
+    img.src = tryonImageUrl;
+    img.style.maxWidth = '40px';
+    img.style.maxHeight = '40px';
+    img.style.objectFit = 'cover';
+    
+    // Add a badge to indicate this is a try-on image
+    const badge = document.createElement('div');
+    badge.style.position = 'absolute';
+    badge.style.bottom = '2px';
+    badge.style.left = '2px';
+    badge.style.backgroundColor = '#ff9900';
+    badge.style.color = 'white';
+    badge.style.fontSize = '8px';
+    badge.style.padding = '2px 4px';
+    badge.style.borderRadius = '2px';
+    badge.style.fontWeight = 'bold';
+    badge.textContent = 'TRY-ON';
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    
+    wrapper.appendChild(img);
+    wrapper.appendChild(badge);
+    imgLink.appendChild(wrapper);
+    imgContainer.appendChild(imgLink);
+    imgDiv.appendChild(imgContainer);
+    span.appendChild(imgDiv);
+    thumbnailItem.appendChild(span);
+    
+    // Add click handler to show the try-on image in the main viewer
+    imgLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const mainImage = document.querySelector('#landingImage, #imgTagWrapperId img') as HTMLImageElement;
+      if (mainImage) {
+        mainImage.src = tryonImageUrl;
+      }
+    });
+    
+    // Insert as the first item in the carousel
+    thumbnailList.insertBefore(thumbnailItem, thumbnailList.firstChild);
+    
+    console.log('The Closet: Try-on image injected successfully into carousel');
+    return true;
+  }
+
+  /**
+   * Checks for and injects any saved try-on image for the current product.
+   */
+  async function checkAndInjectTryonImage() {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'getTryonImage',
+        productUrl: window.location.href
+      });
+
+      if (response.success && response.tryonImage) {
+        console.log('The Closet: Found saved try-on image, injecting into page');
+        injectTryonImageIntoCarousel(response.tryonImage.url);
+      }
+    } catch (error) {
+      console.error('The Closet: Error checking for try-on image:', error);
+    }
+  }
+
+  /**
+   * Removes the injected try-on image from the carousel.
+   * Used for cleanup when the extension is disabled or the page changes.
+   */
+  function removeTryonImage() {
+    const tryonThumb = document.getElementById('closet-tryon-image-thumb');
+    if (tryonThumb) {
+      tryonThumb.remove();
+      console.log('The Closet: Try-on image removed from carousel');
+    }
+  }
+
+  /**
    * Initialize the extension.
    * @returns {void}
    */
@@ -635,13 +799,31 @@
       console.log("The Closet: Product page detected");
       injectSaveButton();
 
-      if (isApparelPage()) injectTryonButton();
-      // Inject the save button
+      if (isApparelPage()) {
+        injectTryonButton();
+        // Check for existing try-on images and inject them
+        checkAndInjectTryonImage();
+        
+        // Listen for try-on upload events
+        window.addEventListener('closet-tryon-uploaded', (event: Event) => {
+          const customEvent = event as CustomEvent;
+          const tryonImageUrl = customEvent.detail.tryonImageUrl;
+          if (tryonImageUrl) {
+            console.log('The Closet: Try-on upload detected, injecting image');
+            injectTryonImageIntoCarousel(tryonImageUrl);
+          }
+        });
+      }
 
       // Re-check after DOM changes (for SPAs)
       const observer = new MutationObserver(() => {
         if (!document.getElementById("closet-save-btn")) {
           injectSaveButton();
+        }
+        
+        // Re-inject try-on image if carousel is rebuilt
+        if (isApparelPage() && !document.getElementById('closet-tryon-image-thumb')) {
+          checkAndInjectTryonImage();
         }
       });
 

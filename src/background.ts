@@ -9,6 +9,12 @@
     site: string;
     timestamp: string;
   }
+
+  interface TryonImage {
+    url: string;
+    productUrl: string;
+    timestamp: string;
+  }
 // Listen for installation
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -48,6 +54,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'clearAll') {
     clearAllProducts()
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
+
+  if (request.action === 'saveTryonImage') {
+    handleSaveTryonImage(request.tryonImageUrl, request.productUrl)
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
+
+  if (request.action === 'getTryonImage') {
+    handleGetTryonImage(request.productUrl)
       .then(response => sendResponse(response))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
@@ -97,6 +117,41 @@ async function clearAllProducts() {
     return { success: true, message: 'All products cleared successfully' };
   } catch (error: any) {
     console.error('Error clearing all products:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Handle saving a try-on image
+async function handleSaveTryonImage(tryonImageUrl: string, productUrl: string) {
+  try {
+    const result = await chrome.storage.local.get(['tryonImages']);
+    const tryonImages = result.tryonImages || {};
+
+    tryonImages[productUrl] = {
+      url: tryonImageUrl,
+      productUrl: productUrl,
+      timestamp: new Date().toISOString()
+    };
+    
+    await chrome.storage.local.set({ tryonImages: tryonImages });
+    
+    return { success: true, message: 'Try-on image saved successfully' };
+  } catch (error: any) {
+    console.error('Error saving try-on image:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Handle getting a try-on image for a specific product
+async function handleGetTryonImage(productUrl: string) {
+  try {
+    const result = await chrome.storage.local.get(['tryonImages']);
+    const tryonImages = result.tryonImages || {};
+    const tryonImage = tryonImages[productUrl];
+    
+    return { success: true, tryonImage: tryonImage || null };
+  } catch (error: any) {
+    console.error('Error getting try-on image:', error);
     return { success: false, error: error.message };
   }
 }
