@@ -1,7 +1,7 @@
-# Image Upload Implementation Notes
+# Image Upload and Try-On Implementation Notes
 
 ## Overview
-This document describes the implementation of user image upload functionality for the Try-On feature in The Closet extension.
+This document describes the implementation of user image upload functionality and try-on image embedding for the Try-On feature in The Closet extension.
 
 ## Architecture
 
@@ -125,3 +125,163 @@ The schema was already defined in `background.ts`:
 4. Show upload progress percentage
 5. Support multiple image uploads
 6. Add image cropping/editing before upload
+
+---
+
+## Try-On Image Embedding
+
+### Overview
+After a successful try-on processing, the generated try-on image is embedded directly into the product page DOM, specifically within the Amazon image carousel/gallery for a seamless user experience.
+
+### Implementation Details
+
+#### Flow
+1. User clicks "Try On" button
+2. `handleTryonClick()` checks if user image exists
+3. If exists, calls `processTryon()` which sends request to background script
+4. Background script processes the try-on via Supabase edge function
+5. Edge function returns `publicUrl` containing the try-on image URL
+6. `processTryon()` calls `embedTryonImage()` with the URL
+7. Image is injected into the Amazon carousel
+
+#### Key Functions (content.ts)
+
+##### `findAmazonImageCarousel()`
+**Purpose:** Locates the Amazon image carousel/gallery container.
+
+**Selectors tried (in order):**
+- `#altImages ul` - Desktop thumbnail list
+- `#imageBlock_feature_div #altImages` - Alternative desktop layout
+- `.a-carousel-viewport` - Carousel viewport
+- `#imageBlock` - Main image block container
+- `#main-image-container` - Another common container
+
+**Returns:** The carousel container HTMLElement or null if not found.
+
+**Fallback:** If no carousel is found, falls back to `fallbackImageInjection()`.
+
+##### `createTryonImageElement(imageUrl: string)`
+**Purpose:** Creates a properly styled try-on image element.
+
+**For Amazon:**
+- Creates a list item (`<li>`) matching Amazon's thumbnail structure
+- Includes proper CSS classes for visual consistency
+- Sets `data-closet-tryon="1"` attribute for identification
+- Adds click handler to display image in main viewer
+- Uses 40px x 40px dimensions to match Amazon thumbnails
+
+**For other sites (fallback):**
+- Creates a simple `<img>` element
+- Applies purple border (2px solid #667eea) for visual distinction
+- Uses responsive sizing (max-width: 100%)
+
+**Returns:** HTMLElement ready for injection.
+
+##### `embedTryonImage(imageUrl: string)`
+**Purpose:** Main function to embed the try-on image into the DOM.
+
+**Logic:**
+1. Checks if try-on image already exists (via `data-closet-tryon` attribute)
+2. If exists, removes old image to avoid duplicates
+3. For Amazon: finds carousel and inserts image as first item
+4. For other sites: uses fallback injection after main product image
+5. Logs success or errors to console
+
+**Integration:** Called automatically when `processTryon()` succeeds.
+
+##### `fallbackImageInjection(imageUrl: string)`
+**Purpose:** Fallback injection method when carousel is not found.
+
+**Logic:**
+1. Uses existing site pattern to find main product image
+2. Inserts try-on image as next sibling to main image
+3. Applied for non-Amazon sites or when Amazon carousel detection fails
+
+#### DOM Structure (Amazon)
+
+**Before injection:**
+```html
+<ul class="a-unordered-list...">
+  <li class="item imageThumbnail">...</li>
+  <li class="item imageThumbnail">...</li>
+</ul>
+```
+
+**After injection:**
+```html
+<ul class="a-unordered-list...">
+  <li class="item imageThumbnail" data-closet-tryon="1">
+    <span class="a-list-item">
+      <span class="a-button a-button-thumbnail">
+        <span class="a-button-inner">
+          <input class="a-button-input" type="submit">
+          <img src="[try-on-url]" alt="Virtual Try-On Result" class="a-dynamic-image">
+        </span>
+      </span>
+    </span>
+  </li>
+  <li class="item imageThumbnail">...</li>
+  <li class="item imageThumbnail">...</li>
+</ul>
+```
+
+### Button State Management
+
+The "Try On" button now shows visual feedback during processing:
+
+**States:**
+1. **Default:** Purple gradient, "Try On" text
+2. **Processing:** Gray gradient, spinner animation, "Processing Try-On..." text
+3. **Success:** Green gradient, checkmark icon, "Try-On Complete!" text (2 seconds)
+4. **Error:** Red gradient, "Try-On Failed! Try again" text (2 seconds)
+
+### Compatibility
+
+#### Desktop Amazon
+- ✅ Works with standard product pages
+- ✅ Injects into thumbnail carousel
+- ✅ Click handler shows image in main viewer
+- ✅ Matches Amazon's styling
+
+#### Mobile Amazon
+- ✅ Should work with same selectors
+- ✅ Falls back to simple injection if carousel not found
+
+#### Other Sites
+- ✅ Uses fallback injection
+- ✅ Inserts after main product image
+- ✅ Applies visual distinction (purple border)
+
+### Edge Cases Handled
+
+1. **Carousel not found:** Uses `fallbackImageInjection()`
+2. **Image already embedded:** Removes old image before adding new one
+3. **Non-Amazon sites:** Uses site-specific patterns for fallback
+4. **Main image not found:** Logs warning and returns gracefully
+5. **Processing errors:** Shows error state on button, doesn't inject image
+
+### MutationObserver
+
+The existing MutationObserver in `init()` ensures buttons remain present on SPA-style page updates. The try-on image injection happens on-demand when the user clicks "Try On", so it doesn't require special observer handling. If Amazon's page structure changes after injection (rare), the user can simply click "Try On" again.
+
+### Testing Checklist
+
+- [ ] Try-on image appears in Amazon carousel after successful processing
+- [ ] Image matches Amazon thumbnail styling (size, structure)
+- [ ] Clicking thumbnail shows try-on in main viewer
+- [ ] Works on different Amazon product pages
+- [ ] Fallback injection works when carousel not found
+- [ ] Old try-on images are replaced when processing again
+- [ ] Button shows correct states (processing, success, error)
+- [ ] No interference with Amazon's native zoom/hover
+- [ ] Works on mobile Amazon pages
+- [ ] Console logs are informative for debugging
+
+### Future Enhancements
+
+1. Add support for multiple try-on results (outfit combinations)
+2. Add download button for try-on image
+3. Add share functionality for try-on results
+4. Persist try-on images across page reloads
+5. Add comparison slider between original and try-on
+6. Support for non-Amazon carousels (eBay, Walmart, etc.)
