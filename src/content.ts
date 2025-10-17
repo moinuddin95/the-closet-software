@@ -1,3 +1,12 @@
+interface ProductPatternJSON {
+  urlPattern: string;
+  titleSelector: string;
+  imageSelector: string;
+  priceSelector: string;
+  insertTarget: string;
+}
+let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
+
 // Content script to detect product pages and add save button
 (function () {
   // Product page detection patterns for different e-commerce sites
@@ -7,10 +16,6 @@
     imageSelector: string;
     priceSelector: string;
     insertTarget: string; // CSS selector where to insert the button
-  }
-  interface ProductPatternBySiteExtension {
-    ca?: ProductPattern;
-    com: ProductPattern;
   }
   const apparelKeywords = [
     // Tops
@@ -214,61 +219,20 @@
     site: string;
     timestamp: string;
   }
-  const PRODUCT_PATTERNS: Record<string, ProductPatternBySiteExtension> = {
-    amazon: {
-      com: {
-        urlPattern: /\/dp\/|\/gp\/product\//,
-        titleSelector: "#productTitle",
-        imageSelector: "#landingImage, #imgTagWrapperId img",
-        priceSelector:
-          ".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice",
-        insertTarget: "#titleSection, #title_feature_div",
-      },
-    },
-    ebay: {
-      com: {
-        urlPattern: /\/itm\//,
-        titleSelector: ".x-item-title__mainTitle, h1.it-ttl",
-        imageSelector: ".ux-image-carousel-item img, #icImg",
-        priceSelector: ".x-price-primary .ux-textspans, #prcIsum",
-        insertTarget: ".x-item-title, .it-ttl",
-      },
-    },
-    walmart: {
-      com: {
-        urlPattern: /\/ip\//,
-        titleSelector: 'h1[itemprop="name"]',
-        imageSelector: 'img[data-testid="hero-image"]',
-        priceSelector: '[itemprop="price"]',
-        insertTarget: 'h1[itemprop="name"]',
-      },
-      ca: {
-        urlPattern: /\/ip\//,
-        titleSelector: "h1#main-title",
-        imageSelector: 'div[data-seo-id="hero-carousel-image"] img',
-        priceSelector: "[data-testid='price-wrap'] span[itemprop='price']",
-        insertTarget: "h1#main-title",
-      },
-    },
-    target: {
-      com: {
-        urlPattern: /\/p\//,
-        titleSelector: 'h1[data-test="product-title"]',
-        imageSelector: 'img[data-test="image-gallery-image"]',
-        priceSelector: '[data-test="product-price"]',
-        insertTarget: 'h1[data-test="product-title"]',
-      },
-    },
-    etsy: {
-      com: {
-        urlPattern: /\/listing\//,
-        titleSelector: "h1",
-        imageSelector: ".wt-max-width-full img",
-        priceSelector: '[data-buy-box-region="price"]',
-        insertTarget: "h1",
-      },
+  // Helper to convert a pattern string like "/foo/i" into a RegExp
+  function regexFromString(pattern: string): RegExp {
+    // Expect format "/.../flags?"; fall back to whole string if not wrapped
+    if (pattern.startsWith("/") && pattern.lastIndexOf("/") > 0) {
+      const lastSlash = pattern.lastIndexOf("/");
+      const body = pattern.slice(1, lastSlash);
+      const flags = pattern.slice(lastSlash + 1);
+      return new RegExp(body, flags);
     }
-  };
+    return new RegExp(pattern);
+  }
+
+  // Will be populated after fetching from background
+  let PRODUCT_PATTERNS: Record<string, ProductPattern> = {};
   /**
    * Detects the current e-commerce site based on the window's hostname.
    *
@@ -288,44 +252,26 @@
    * Defaults to 'n/a' if no recognized extension is found.
    * @returns {string} The site extension.
    */
-  function getSiteExtension() {
-    const hostname = window.location.hostname;
-    if (hostname.endsWith(".ca")) return "ca";
-    if (hostname.endsWith(".com")) return "com";
-    return "n/a";
-  }
-
   /**
    * Gets the product pattern for the current site and extension.
    * Returns null if no valid pattern is found.
    * @returns {ProductPattern | null}
    */
   function getSitePattern() {
-    let siteExtension = getSiteExtension();
     const site = getSiteIdentifier();
-
-    if (siteExtension === "n/a" || site === "n/a") return null;
-
-    const patternsWithExtensions = PRODUCT_PATTERNS[site];
-    // Switch to .com if the existing site extension pattern doesn't exist
-    siteExtension =
-      siteExtension !== "com" &&
-      !patternsWithExtensions[
-        siteExtension as keyof ProductPatternBySiteExtension
-      ]
-        ? "com"
-        : siteExtension;
-    // Check URL pattern
-    if (
-      !patternsWithExtensions?.[
-        siteExtension as keyof ProductPatternBySiteExtension
-      ]?.urlPattern.test(window.location.href)
-    )
+    if (site === "n/a") {
       return null;
+    }
 
-    return patternsWithExtensions[
-      siteExtension as keyof ProductPatternBySiteExtension
-    ]!;
+    const pattern = PRODUCT_PATTERNS[site];
+    if (!pattern) {
+      return null;
+    }
+    if (!pattern.urlPattern.test(globalThis.location.href)) {
+      return null;
+    }
+
+    return pattern;
   }
 
   /**
@@ -725,7 +671,37 @@
    * Initialize the extension.
    * @returns {void}
    */
-  function init() {
+  async function loadPatterns(): Promise<void> {
+    if (PATTERNS_JSON) return; // already loaded
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "getProductsPattern",
+      });
+      if (!response?.success || !response?.patterns) {
+        console.error("The Closet: Failed to load product patterns", response);
+        return;
+      }
+      PATTERNS_JSON = response.patterns as Record<string, ProductPatternJSON>;
+      PRODUCT_PATTERNS = Object.fromEntries(
+        Object.entries(PATTERNS_JSON).map(([site, p]) => [
+          site,
+          {
+            urlPattern: regexFromString(p.urlPattern),
+            titleSelector: p.titleSelector,
+            imageSelector: p.imageSelector,
+            priceSelector: p.priceSelector,
+            insertTarget: p.insertTarget,
+          },
+        ])
+      );
+    } catch (e) {
+      console.error("The Closet: Error loading product patterns", e);
+    }
+  }
+
+  async function init() {
+    // Ensure patterns are loaded first
+    await loadPatterns();
     // Check if we're on a product page
     chrome.runtime.sendMessage({ action: "getUser" }).then((response) => {
       if (response.user) {
@@ -768,8 +744,8 @@
 
   // Run initialization when DOM is ready
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", () => void init());
   } else {
-    init();
+    void init();
   }
 })();

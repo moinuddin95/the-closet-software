@@ -1,4 +1,7 @@
 import { supabase } from "./supabaseConfig";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - Allow JSON import for patterns
+import ProductPatterns from "./ProductPatterns.json";
 
 // Product information schema for saving the product
 interface ProductInfo {
@@ -36,6 +39,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.storage.local.get(["savedProducts"], (result) => {
       sendResponse({ products: result.savedProducts || [] });
     });
+    return true;
+  }
+  if (request.action === "getProductsPattern") {
+    try {
+      sendResponse({ success: true, patterns: ProductPatterns });
+    } catch (error: any) {
+      sendResponse({ success: false, error: error?.message || String(error) });
+    }
     return true;
   }
   if (request.action === "removeProduct") {

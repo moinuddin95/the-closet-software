@@ -1,0 +1,37 @@
+{
+  "amazon": {
+    "urlPattern": "/\\/dp\\/|\\/gp\\/product\\//",
+    "titleSelector": "#productTitle",
+    "imageSelector": "#landingImage, #imgTagWrapperId img",
+    "priceSelector": ".a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice",
+    "insertTarget": "#titleSection, #title_feature_div"
+  },
+  "ebay": {
+    "urlPattern": "/\\/itm\\//",
+    "titleSelector": ".x-item-title__mainTitle, h1.it-ttl",
+    "imageSelector": ".ux-image-carousel-item img, #icImg",
+    "priceSelector": ".x-price-primary .ux-textspans, #prcIsum",
+    "insertTarget": ".x-item-title, .it-ttl"
+  },
+  "walmart": {
+    "urlPattern": "/\\/ip\\//",
+    "titleSelector": "h1[itemprop=\"name\"], h1#main-title",
+    "imageSelector": "img[data-testid=\"hero-image\"], div[data-seo-id=\"hero-carousel-image\"] img",
+    "priceSelector": "[itemprop=\"price\"], [data-testid='price-wrap'] span[itemprop='price']",
+    "insertTarget": "h1[itemprop=\"name\"], h1#main-title"
+  },
+  "target": {
+    "urlPattern": "/\\/p\\//",
+    "titleSelector": "h1[data-test=\"product-title\"]",
+    "imageSelector": "img[data-test=\"image-gallery-image\"]",
+    "priceSelector": "[data-test=\"product-price\"]",
+    "insertTarget": "h1[data-test=\"product-title\"]"
+  },
+  "etsy": {
+    "urlPattern": "/\\/listing\\//",
+    "titleSelector": "h1",
+    "imageSelector": ".wt-max-width-full img",
+    "priceSelector": "[data-buy-box-region=\"price\"]",
+    "insertTarget": "h1"
+  }
+}
