@@ -214,6 +214,11 @@
     site: string;
     timestamp: string;
   }
+  
+  // Constants for styling
+  const CLOSET_BRAND_COLOR = "#667eea";
+  const CLOSET_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  
   const PRODUCT_PATTERNS: Record<string, ProductPatternBySiteExtension> = {
     amazon: {
       com: {
@@ -589,6 +594,10 @@
    */
   async function handleTryonClick(event: Event) {
     event.preventDefault();
+    
+    const button = event.currentTarget as HTMLButtonElement;
+    const originalContent = button.innerHTML;
+    
     try {
       let userImageId: string | null | undefined = undefined;
       try {
@@ -604,13 +613,52 @@
       }
 
       if (userImageId) {
+        // Show processing state
+        button.classList.add("closet-saving");
+        button.disabled = true;
+        button.innerHTML = `
+          <svg class="closet-spinner" width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="30" />
+          </svg>
+          <span>Processing Try-On...</span>
+        `;
+        
         try {
           // If a user image is already present, proceed with try-on flow without showing upload UI
           await processTryon();
+          
+          // Show success state
+          button.classList.remove("closet-saving");
+          button.classList.add("closet-saved");
+          button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+            <span>Try-On Complete!</span>
+          `;
+
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            button.disabled = false;
+            button.classList.remove("closet-saved");
+            button.innerHTML = originalContent;
+          }, 2000);
         } catch (e) {
           console.error("The Closet: processTryon failed:", e);
-          // Optional: surface a user message or fallback to upload
-          // await injectTryonImageUploadPopup();
+          
+          // Show error state
+          button.classList.remove("closet-saving");
+          button.classList.add("closet-error");
+          button.innerHTML = `
+            <span>Try-On Failed! Try again</span>
+          `;
+
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            button.disabled = false;
+            button.classList.remove("closet-error");
+            button.innerHTML = originalContent;
+          }, 2000);
         }
         return;
       }
@@ -621,9 +669,222 @@
     }
   }
   /**
+   * Creates a badge element to label try-on images.
+   * @param {string} text - The text to display on the badge.
+   * @param {object} position - Optional positioning styles (top, left, fontSize, padding).
+   * @returns {HTMLSpanElement} The created badge element.
+   */
+  function createTryonBadge(
+    text: string,
+    position: { top?: string; left?: string; fontSize?: string; padding?: string } = {}
+  ) {
+    const badge = document.createElement("span");
+    badge.textContent = text;
+    badge.style.position = "absolute";
+    badge.style.top = position.top || "2px";
+    badge.style.left = position.left || "2px";
+    badge.style.backgroundColor = CLOSET_BRAND_COLOR;
+    badge.style.color = "white";
+    badge.style.fontSize = position.fontSize || "8px";
+    badge.style.padding = position.padding || "2px 4px";
+    badge.style.borderRadius = "3px";
+    badge.style.fontWeight = "bold";
+    badge.style.zIndex = "10";
+    badge.style.fontFamily = CLOSET_FONT_FAMILY;
+    return badge;
+  }
+
+  /**
+   * Finds the Amazon image carousel/gallery container element.
+   * Tries multiple selectors to support different Amazon page layouts.
+   * @returns {HTMLElement | null} The carousel container element, or null if not found.
+   */
+  function findAmazonImageCarousel() {
+    const site = getSiteIdentifier();
+    if (site !== "amazon") {
+      console.warn("The Closet: Not on Amazon, cannot embed try-on image");
+      return null;
+    }
+
+    // Try to find the image carousel/gallery container
+    // Amazon uses different layouts, so we try multiple selectors
+    const selectors = [
+      "#altImages ul",                           // Desktop thumbnail list
+      "#imageBlock_feature_div #altImages",      // Alternative desktop layout
+      ".a-carousel-viewport",                     // Carousel viewport
+      "#imageBlock",                              // Main image block container
+      "#main-image-container",                    // Another common container
+    ];
+
+    for (const selector of selectors) {
+      const container = document.querySelector(selector);
+      if (container) {
+        console.log(`The Closet: Found image carousel using selector: ${selector}`);
+        return container as HTMLElement;
+      }
+    }
+
+    console.warn("The Closet: Could not find Amazon image carousel container");
+    return null;
+  }
+
+  /**
+   * Creates a try-on image element styled to match Amazon's product images.
+   * @param {string} imageUrl - The URL of the try-on image to display.
+   * @returns {HTMLElement} The created image element wrapped in appropriate containers.
+   */
+  function createTryonImageElement(imageUrl: string) {
+    const site = getSiteIdentifier();
+    
+    if (site === "amazon") {
+      // Create a list item similar to Amazon's thumbnail structure
+      const li = document.createElement("li");
+      li.className = "a-spacing-small item imageThumbnail a-declarative";
+      li.setAttribute("data-closet-tryon", "1"); // Mark as our injected element
+      li.style.position = "relative"; // For badge positioning
+      
+      const span = document.createElement("span");
+      span.className = "a-list-item";
+      
+      const spanInner = document.createElement("span");
+      spanInner.className = "a-button a-button-thumbnail a-button-toggle";
+      
+      const spanInnerInner = document.createElement("span");
+      spanInnerInner.className = "a-button-inner";
+      
+      const input = document.createElement("input");
+      input.className = "a-button-input";
+      input.type = "submit";
+      
+      const img = document.createElement("img");
+      img.alt = "Virtual Try-On Result";
+      img.src = imageUrl;
+      img.className = "a-dynamic-image";
+      img.style.maxHeight = "40px"; // Match Amazon thumbnail size
+      img.style.maxWidth = "40px";
+      
+      // Add a small badge to indicate this is a try-on result
+      const badge = createTryonBadge("Try-On");
+      
+      spanInnerInner.appendChild(input);
+      spanInnerInner.appendChild(img);
+      spanInner.appendChild(spanInnerInner);
+      span.appendChild(spanInner);
+      li.appendChild(span);
+      li.appendChild(badge);
+      
+      // Add click handler to show the try-on image in the main viewer
+      li.addEventListener("click", () => {
+        const mainImage = document.querySelector("#landingImage, #imgTagWrapperId img") as HTMLImageElement;
+        if (mainImage) {
+          mainImage.src = imageUrl;
+          mainImage.alt = "Virtual Try-On Result";
+        }
+      });
+      
+      return li;
+    }
+
+    // Fallback: create a simple image element for non-Amazon sites
+    const container = document.createElement("div");
+    container.style.position = "relative";
+    container.style.display = "inline-block";
+    container.style.marginTop = "10px";
+    container.setAttribute("data-closet-tryon", "1");
+    
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.alt = "Virtual Try-On Result";
+    img.className = "closet-tryon-image";
+    img.style.maxWidth = "100%";
+    img.style.border = `2px solid ${CLOSET_BRAND_COLOR}`;
+    img.style.borderRadius = "8px";
+    img.style.display = "block";
+    
+    // Add a badge to indicate this is a try-on result
+    const badge = createTryonBadge("Virtual Try-On Result", {
+      top: "10px",
+      left: "10px",
+      fontSize: "12px",
+      padding: "4px 8px"
+    });
+    
+    container.appendChild(img);
+    container.appendChild(badge);
+    
+    return container;
+  }
+
+  /**
+   * Embeds the try-on image into the product page DOM.
+   * For Amazon, injects into the image carousel/gallery.
+   * For other sites, inserts after the main product image.
+   * @param {string} imageUrl - The URL of the try-on image to embed.
+   * @returns {void}
+   */
+  function embedTryonImage(imageUrl: string) {
+    // Check if try-on image is already embedded
+    const existingTryonImage = document.querySelector('[data-closet-tryon="1"]');
+    if (existingTryonImage) {
+      console.log("The Closet: Try-on image already embedded, updating...");
+      existingTryonImage.remove();
+    }
+
+    const site = getSiteIdentifier();
+    
+    if (site === "amazon") {
+      // Find the carousel container
+      const carousel = findAmazonImageCarousel();
+      if (!carousel) {
+        console.warn("The Closet: Could not find carousel, falling back to simple injection");
+        fallbackImageInjection(imageUrl);
+        return;
+      }
+
+      // Create and inject the try-on image element
+      const tryonElement = createTryonImageElement(imageUrl);
+      
+      // Insert as the first item in the carousel
+      if (carousel.firstChild) {
+        carousel.insertBefore(tryonElement, carousel.firstChild);
+      } else {
+        carousel.appendChild(tryonElement);
+      }
+      
+      console.log("The Closet: Try-on image successfully embedded into carousel");
+    } else {
+      // For non-Amazon sites, use fallback injection
+      fallbackImageInjection(imageUrl);
+    }
+  }
+
+  /**
+   * Fallback method to inject try-on image when carousel is not found.
+   * Inserts the image after the main product image.
+   * @param {string} imageUrl - The URL of the try-on image to embed.
+   * @returns {void}
+   */
+  function fallbackImageInjection(imageUrl: string) {
+    const pattern = getSitePattern();
+    if (!pattern) return;
+
+    const mainImage = document.querySelector(pattern.imageSelector);
+    if (!mainImage || !mainImage.parentElement) {
+      console.warn("The Closet: Could not find main product image for fallback injection");
+      return;
+    }
+
+    const tryonElement = createTryonImageElement(imageUrl);
+    mainImage.parentElement.insertBefore(tryonElement, mainImage.nextSibling);
+    
+    console.log("The Closet: Try-on image injected using fallback method");
+  }
+
+  /**
    * Processes the try-on request by extracting product info via `extractProductInfo()`.  
    * Sends the product info to the background script for processing.  
    * Message: `{ action: "processTryon", product: ProductInfo }`  
+   * On success, embeds the try-on image into the product page DOM.
    * @returns {Promise<void>}
    */
   async function processTryon() {
@@ -639,6 +900,11 @@
       throw new Error("Try-on processing failed: " + response.error);
     }
     console.log("The Closet: Try-on processing successful", response.publicUrl);
+    
+    // Embed the try-on image into the product page
+    if (response.publicUrl) {
+      embedTryonImage(response.publicUrl);
+    }
   }
 
   /**
