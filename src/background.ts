@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseConfig";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Allow JSON import for patterns
-import ProductPatterns from "./ProductPatterns.json";
+import ProductPatterns from "./ProductPatternsUpdated.json";
 
 // Product information schema for saving the product
 interface ProductInfo {

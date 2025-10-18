@@ -1,0 +1,39 @@
+{
+  "amazon": {
+    "urlPattern": "/\\/dp\\/|\\/gp\\/product\\//",
+    "selectors": {
+      "titleSelector": "#productTitle",
+      "insertTarget": "#titleSection, #title_feature_div",
+      "mainImage": "#landingImage, #imgBlkFront, .a-dynamic-image",
+      "priceSelector": ".a-price, .a-offscreen, #priceblock_ourprice, #priceblock_dealprice",
+      "thumbnailList": "ul.regularAltImageViewLayout, ul[class*=\"altImages\"]",
+      "thumbnailItem": "li.imageThumbnail",
+      "videoThumbnail": "li.videoThumbnail"
+    },
+    "injectTemplate": "<li class=\"a-spacing-small item imageThumbnail a-declarative\" data-csa-c-type=\"uxElement\" data-csa-c-element-type=\"navigational\" data-csa-c-action=\"image-block-alt-image-hover\"><span class=\"a-list-item\"><span class=\"a-button a-button-thumbnail a-button-toggle\" id=\"btn-{{uniqueId}}\"><span class=\"a-button-inner\"><input role=\"radio\" aria-checked=\"false\" class=\"a-button-input\" type=\"submit\" aria-labelledby=\"announce-{{uniqueId}}\" aria-posinset=\"{{posInSet}}\" aria-setsize=\"{{setSize}}\"><span class=\"a-button-text\" aria-hidden=\"true\" id=\"announce-{{uniqueId}}\"><img src=\"{{imageUrl}}\" alt=\"Product image\"></span></span></span></span></li>"
+  },
+  "ebay": {
+    "urlPattern": "/\\/itm\\/|\\/p\\//",
+    "selectors": {
+      "titleSelector": "h1.x-item-title__mainTitle, .it-ttl",
+      "insertTarget": ".vim.x-item-title, .it-ttl-bdl",
+      "mainImage": "div.ux-image-carousel-item.image-treatment.image > img, img[id*=\"icImg\"]",
+      "priceSelector": ".x-price-primary .ux-textspans, #prcIsum",
+      "thumbnailList": "div.ux-image-carousel-container ul, .ux-image-filmstrip",
+      "thumbnailItem": "li.ux-image-carousel-item"
+    },
+    "injectTemplate": "<li class=\"ux-image-carousel-item\"><button class=\"ux-image-filmstrip-carousel-item\" type=\"button\" aria-label=\"Product image {{posInSet}}\"><div class=\"ux-image-filmstrip-carousel-item__image\"><img src=\"{{imageUrl}}\" alt=\"Product thumbnail\"></div></button></li>"
+  },
+  "hm": {
+    "urlPattern": "/\\/productpage\\./",
+    "selectors": {
+      "titleSelector": "h1.ProductName-module--productTitle, h1[class*=\"product-item-headline\"]",
+      "insertTarget": ".ProductName-module--container, .product-detail-info",
+      "mainImage": "img[data-testid=\"product-image\"], div[data-testid=\"pdp-image\"] img",
+      "priceSelector": "span[itemprop=\"price\"]",
+      "thumbnailList": "ul[data-testid=\"grid-gallery\"]",
+      "thumbnailItem": "li[data-testid^=\"grid-image\"]"
+    },
+    "injectTemplate": "<li data-testid=\"grid-image-injected_{{timestamp}}_{{index}}\"><button type=\"button\" class=\"e8e3eb\" aria-label=\"View larger image: Product image {{posInSet}}\" title=\"View larger image: Product image {{posInSet}}\"><div class=\"fea697 b519aa d937bd f07ab8\" data-testid=\"next-image\"><span style=\"box-sizing:border-box;display:block;overflow:hidden;width:initial;height:initial;background:none;opacity:1;border:0;margin:0;padding:0;position:absolute;top:0;left:0;bottom:0;right:0\"><img alt=\"View larger image: Product image {{posInSet}}\" src=\"{{imageUrl}}\" decoding=\"async\" data-nimg=\"fill\" style=\"position:absolute;top:0;left:0;bottom:0;right:0;box-sizing:border-box;padding:0;border:none;margin:auto;display:block;width:0;height:0;min-width:100%;max-width:100%;min-height:100%;max-height:100%\" sizes=\"(max-width: 768px) 94vw, 50vw\" srcset=\"{{imageUrl}}?imwidth=256 256w, {{imageUrl}}?imwidth=384 384w, {{imageUrl}}?imwidth=768 768w, {{imageUrl}}?imwidth=1536 1536w, {{imageUrl}}?imwidth=2160 2160w\"></span></div></button></li>"
+  }
+}

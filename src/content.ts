@@ -1,9 +1,15 @@
 interface ProductPatternJSON {
   urlPattern: string;
-  titleSelector: string;
-  imageSelector: string;
-  priceSelector: string;
-  insertTarget: string;
+  selectors: {
+    titleSelector: string;
+    insertTarget: string;
+    mainImage: string;
+    priceSelector: string;
+    thumbnailList?: string;
+    thumbnailItem?: string;
+    videoThumbnail?: string;
+  };
+  injectTemplate?: string;
 }
 let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
@@ -12,10 +18,16 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   // Product page detection patterns for different e-commerce sites
   interface ProductPattern {
     urlPattern: RegExp;
-    titleSelector: string;
-    imageSelector: string;
-    priceSelector: string;
-    insertTarget: string; // CSS selector where to insert the button
+    selectors: {
+      titleSelector: string;
+      insertTarget: string;
+      mainImage: string;
+      priceSelector: string;
+      thumbnailList?: string;
+      thumbnailItem?: string;
+      videoThumbnail?: string;
+    };
+    injectTemplate?: string; // HTML snippet to inject a thumbnail/button
   }
   const apparelKeywords = [
     // Tops
@@ -233,25 +245,23 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   // Will be populated after fetching from background
   let PRODUCT_PATTERNS: Record<string, ProductPattern> = {};
+
   /**
    * Detects the current e-commerce site based on the window's hostname.
    *
    * @returns {string} The detected site identifier: 'amazon', 'ebay', 'walmart', 'target', 'etsy', or 'generic' if none match.
    */
   function getSiteIdentifier() {
-    const hostname = window.location.hostname;
+    const hostname = globalThis.location.hostname;
     if (hostname.includes("amazon")) return "amazon";
     if (hostname.includes("ebay")) return "ebay";
     if (hostname.includes("walmart")) return "walmart";
     if (hostname.includes("target")) return "target";
     if (hostname.includes("etsy")) return "etsy";
+    if (hostname.includes("shopify")) return "shopify";
+    if (hostname.includes("hm.com")) return "hm";
     return "n/a";
   }
-  /**
-   * Gets the site extension (e.g., 'com', 'ca') based on the hostname.
-   * Defaults to 'n/a' if no recognized extension is found.
-   * @returns {string} The site extension.
-   */
   /**
    * Gets the product pattern for the current site and extension.
    * Returns null if no valid pattern is found.
@@ -273,7 +283,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     return pattern;
   }
-
   /**
    * Checks if the current page is a product page. 
    * The product page is determined by matching URL patterns and checking for title and image DOM elements.
@@ -285,14 +294,13 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.info("The Closet: Detected site pattern", pattern);
 
     // Check if product elements exist
-    const title = document.querySelector(pattern.titleSelector);
-    const image = document.querySelector(pattern.imageSelector);
+  const title = document.querySelector(pattern.selectors.titleSelector);
+  const image = document.querySelector(pattern.selectors.mainImage);
 
     console.info("The Closet: Detected product elements", { title, image });
 
     return !!(title && image);
   }
-
   /**
    * Checks if the current product page is likely an apparel page based on title keywords.
    * @returns {boolean} True if the product title contains apparel-related keywords.
@@ -301,7 +309,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return false;
 
-    const titleEl = document.querySelector(pattern.titleSelector);
+  const titleEl = document.querySelector(pattern.selectors.titleSelector);
     for (const keyword of apparelKeywords) {
       if (titleEl?.textContent?.toLowerCase().includes(keyword)) {
         console.log(
@@ -314,7 +322,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.log("The Closet: Not an apparel page");
     return false;
   }
-
   /**
    * Extracts product information from the page.
    * Parses the DOM content to retrieve product details.
@@ -325,10 +332,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return null;
 
-    const titleEl = document.querySelector(pattern.titleSelector);
-    const imageEl = document.querySelector(pattern.imageSelector);
-    const priceEl = document.querySelector(pattern.priceSelector);
-
+  const titleEl = document.querySelector(pattern.selectors.titleSelector);
+  const imageEl = document.querySelector(pattern.selectors.mainImage);
+  const priceEl = document.querySelector(pattern.selectors.priceSelector);
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageEl ? imageEl.getAttribute("src") : "",
@@ -338,14 +344,13 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         const m = re.exec(text);
         return m ? m[0] : "N/A";
       })(),
-      url: window.location.href,
+      url: globalThis.location.href,
       site: site,
       timestamp: new Date().toISOString(),
     } as ProductInfo;
   }
-
   /**
-   * Injects the button container with id "closet-btns-container" as a next sibling to the insertTarget element.
+   * Injects the button container with `#closet-btns-container` as a next sibling to the insertTarget element.
    * @returns {void}
    */
   function injectButtonsContainer() {
@@ -357,7 +362,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return;
 
-    const targetElement = document.querySelector(pattern.insertTarget);
+  const targetElement = document.querySelector(pattern.selectors.insertTarget);
 
     if (!targetElement?.parentNode) {
       console.log(
@@ -379,10 +384,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: button container injected successfully");
   }
-
   /**
-   * Injects a button with id "closet-save-btn" into the product page.
-   * DOM Location is child to the button container with id "closet-btns-container".
+   * Injects a button `#closet-save-btn` into the product page.
+   * DOM Location is child to the button container with `#closet-btns-container`.
    * Click event is handled by handleSaveClick.
    * @returns {void}
    */
@@ -414,7 +418,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: Save button injected successfully");
   }
-
   /**
    * Injects a button `#closet-tryon-btn` into the product page.  
    * DOM Location is child to the button container `#closet-btns-container`.  
@@ -452,7 +455,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: Try on button injected successfully");
   }
-
   /**
    * Gets the product info by calling `extractProductInfo()`.  
    * Sends a message to the background script to save the current product.  
@@ -586,7 +588,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     console.log("The Closet: Try-on processing successful", response.publicUrl);
   }
-
   /**
    * Injects the popup in container `#closet-tryon-popup-root`.  
    * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.  
@@ -627,7 +628,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Set up listener for image upload events from the popup
     setupImageUploadListener();
   }
-
   /**
    * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.  
    * Event.detail should contain `{ image: string, mimeType: string }`.  
@@ -666,7 +666,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       }
     });
   }
-
   /**
    * Initialize the extension.
    * @returns {void}
@@ -687,10 +686,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           site,
           {
             urlPattern: regexFromString(p.urlPattern),
-            titleSelector: p.titleSelector,
-            imageSelector: p.imageSelector,
-            priceSelector: p.priceSelector,
-            insertTarget: p.insertTarget,
+            selectors: { ...p.selectors },
+            injectTemplate: p.injectTemplate,
           },
         ])
       );
@@ -698,7 +695,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       console.error("The Closet: Error loading product patterns", e);
     }
   }
-
   async function init() {
     // Ensure patterns are loaded first
     await loadPatterns();
@@ -741,7 +737,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       console.log("The Closet: Not a product page");
     }
   }
-
   // Run initialization when DOM is ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => void init());
