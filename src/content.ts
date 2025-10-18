@@ -284,9 +284,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return pattern;
   }
   /**
-   * Checks if the current page is a product page. 
+   * Checks if the current page is a product page.
    * The product page is determined by matching URL patterns and checking for title and image DOM elements.
-   * @returns {boolean} 
+   * @returns {boolean}
    */
   function isProductPage() {
     const pattern = getSitePattern();
@@ -294,8 +294,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.info("The Closet: Detected site pattern", pattern);
 
     // Check if product elements exist
-  const title = document.querySelector(pattern.selectors.titleSelector);
-  const image = document.querySelector(pattern.selectors.mainImage);
+    const title = document.querySelector(pattern.selectors.titleSelector);
+    const image = document.querySelector(pattern.selectors.mainImage);
 
     console.info("The Closet: Detected product elements", { title, image });
 
@@ -309,7 +309,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return false;
 
-  const titleEl = document.querySelector(pattern.selectors.titleSelector);
+    const titleEl = document.querySelector(pattern.selectors.titleSelector);
     for (const keyword of apparelKeywords) {
       if (titleEl?.textContent?.toLowerCase().includes(keyword)) {
         console.log(
@@ -332,9 +332,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return null;
 
-  const titleEl = document.querySelector(pattern.selectors.titleSelector);
-  const imageEl = document.querySelector(pattern.selectors.mainImage);
-  const priceEl = document.querySelector(pattern.selectors.priceSelector);
+    const titleEl = document.querySelector(pattern.selectors.titleSelector);
+    const imageEl = document.querySelector(pattern.selectors.mainImage);
+    const priceEl = document.querySelector(pattern.selectors.priceSelector);
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageEl ? imageEl.getAttribute("src") : "",
@@ -362,7 +362,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return;
 
-  const targetElement = document.querySelector(pattern.selectors.insertTarget);
+    const targetElement = document.querySelector(
+      pattern.selectors.insertTarget
+    );
 
     if (!targetElement?.parentNode) {
       console.log(
@@ -419,8 +421,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.log("The Closet: Save button injected successfully");
   }
   /**
-   * Injects a button `#closet-tryon-btn` into the product page.  
-   * DOM Location is child to the button container `#closet-btns-container`.  
+   * Injects a button `#closet-tryon-btn` into the product page.
+   * DOM Location is child to the button container `#closet-btns-container`.
    * Click event is handled by `handleTryonClick`.
    * @returns {void}
    */
@@ -456,9 +458,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.log("The Closet: Try on button injected successfully");
   }
   /**
-   * Gets the product info by calling `extractProductInfo()`.  
-   * Sends a message to the background script to save the current product.  
-   * Message: `{ action: "saveProduct", product: ProductInfo }`  
+   * Gets the product info by calling `extractProductInfo()`.
+   * Sends a message to the background script to save the current product.
+   * Message: `{ action: "saveProduct", product: ProductInfo }`
    * @param {*} event
    * @return {Promise<void>}
    */
@@ -529,9 +531,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Checks if userImageId exists by sending a message to the background script.  
-   * Message: `{ action: "getuserImageId" }`  
-   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.  
+   * Checks if userImageId exists by sending a message to the background script.
+   * Message: `{ action: "getuserImageId" }`
+   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
    * @param event The click event.
    * @returns {Promise<void>}
    */
@@ -569,16 +571,18 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Processes the try-on request by extracting product info via `extractProductInfo()`.  
-   * Sends the product info to the background script for processing.  
-   * Message: `{ action: "processTryon", product: ProductInfo }`  
+   * Processes the try-on request by extracting product info via `extractProductInfo()`.
+   * Sends the product info to the background script for processing.
+   * Message: `{ action: "processTryon", product: ProductInfo }`
    * @returns {Promise<void>}
    */
   async function processTryon() {
     const product = extractProductInfo();
     if (!product) throw new Error("Failed to extract product info");
     // Send to background script
-    console.log("The Closet: Sending product for try-on processing", { product });
+    console.log("The Closet: Sending product for try-on processing", {
+      product,
+    });
     const response = await chrome.runtime.sendMessage({
       action: "processTryon",
       product,
@@ -587,12 +591,102 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       throw new Error("Try-on processing failed: " + response.error);
     }
     console.log("The Closet: Try-on processing successful", response.publicUrl);
+    // If a public URL is returned, inject the generated image into the page's thumbnail list
+    if (response.publicUrl) {
+      const injected = injectTryonImage(response.publicUrl as string);
+      if (!injected) {
+        console.warn(
+          "The Closet: injectTryonImage failed or not supported for this site."
+        );
+      }
+    }
+  }
+
+  /**
+   * Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate.
+   * The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}
+   * will be replaced with appropriate values prior to insertion.
+   *
+   * @param imageUrl The public URL of the generated try-on image.
+   * @returns true if injection succeeded; false otherwise.
+   */
+  function injectTryonImage(imageUrl: string): boolean {
+    const pattern = getSitePattern();
+    if (!pattern) {
+      return false;
+    }
+
+    const template = pattern.injectTemplate;
+    const listSelector = pattern.selectors.thumbnailList;
+    if (!template || !listSelector) {
+      // No injection template or no list container selector set for this site
+      return false;
+    }
+
+    const listEl = document.querySelector(listSelector);
+    if (!listEl) {
+      console.warn(
+        "The Closet: Thumbnail list element not found for selector:",
+        listSelector
+      );
+      return false;
+    }
+
+    // Determine current count to compute posInSet/setSize and index
+    let existingCount = 0;
+    if (pattern.selectors.thumbnailItem) {
+      existingCount = listEl.querySelectorAll(
+        pattern.selectors.thumbnailItem
+      ).length;
+    } else if ((listEl as HTMLElement).children) {
+      existingCount = (listEl as HTMLElement).children.length;
+    }
+
+    const posInSet = existingCount + 1; // 1-based position after insertion
+    const setSize = posInSet; // total size after insertion equals new position as we're appending
+    const uniqueId = `closet_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+    const timestamp = String(Date.now());
+    const index = String(existingCount); // zero-based index for some templates
+
+    const values: Record<string, string> = {
+      imageUrl,
+      uniqueId,
+      posInSet: String(posInSet),
+      setSize: String(setSize),
+      timestamp,
+      index,
+    };
+
+    // Replace {{placeholders}} (with or without surrounding spaces) using simple string replaceAll
+    let html = template;
+    for (const [k, v] of Object.entries(values)) {
+      // common form without spaces
+      html = html.replaceAll(`{{${k}}}`, v);
+      // tolerate optional single spaces inside braces
+      html = html.replaceAll(`{{ ${k} }}`, v);
+    }
+
+    // Create element from HTML string
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html.trim();
+    const node = wrapper.firstElementChild as HTMLElement | null;
+    if (!node) {
+      return false;
+    }
+    node.dataset.closetInjected = "1";
+
+    // Append to the thumbnail list
+    listEl.appendChild(node);
+    console.log("The Closet: Injected try-on image into thumbnail list.");
+    return true;
   }
   /**
-   * Injects the popup in container `#closet-tryon-popup-root`.  
-   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.  
-   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.  
-   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.  
+   * Injects the popup in container `#closet-tryon-popup-root`.
+   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.
+   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.
+   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.
    * @returns {void}
    */
   function injectTryonImageUploadPopup() {
@@ -608,20 +702,22 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     document.body.appendChild(popupRoot);
 
     // Inject CSS
-    if (!document.querySelector('link[data-closet-tryon-css="1"]')) {
+    if (!document.getElementById("closet-tryon-css")) {
       const link = document.createElement("link");
+      link.id = "closet-tryon-css";
       link.rel = "stylesheet";
       link.href = chrome.runtime.getURL("src/tryonImageUploadPopup.css");
-      link.setAttribute("data-closet-tryon-css", "1");
+      link.dataset.closetTryonCss = "1";
       document.head.appendChild(link);
     }
 
     // Inject module script for the popup UI
-    if (!document.querySelector('script[data-closet-tryon="1"]')) {
+    if (!document.getElementById("closet-tryon-script")) {
       const script = document.createElement("script");
+      script.id = "closet-tryon-script";
       script.type = "module";
       script.src = chrome.runtime.getURL("src/tryonImageUploadPopup.js");
-      script.setAttribute("data-closet-tryon", "1");
+      script.dataset.closetTryon = "1";
       document.body.appendChild(script);
     }
 
@@ -629,11 +725,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     setupImageUploadListener();
   }
   /**
-   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.  
-   * Event.detail should contain `{ image: string, mimeType: string }`.  
-   * On receiving the event, it sends the image data to the background script for uploading.  
-   * Message: `{ action: "uploadImage", image: string, mimeType: string }`  
-   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.  
+   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.
+   * Event.detail should contain `{ image: string, mimeType: string }`.
+   * On receiving the event, it sends the image data to the background script for uploading.
+   * Message: `{ action: "uploadImage", image: string, mimeType: string }`
+   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.
    * @returns {void}
    */
   function setupImageUploadListener() {
