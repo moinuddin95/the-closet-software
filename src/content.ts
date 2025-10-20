@@ -677,16 +677,21 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
-    //TODO: Add on click event here to change the main image to this try-on image
-    node.addEventListener("click", () => {
-      const mainImageEl = document.querySelector(
-        pattern.selectors.mainImage
-      ) as HTMLImageElement;
-      if (mainImageEl) {
-        mainImageEl.src = imageUrl;
-      } else {
-        console.warn("The Closet: Main image element not found for selector:", pattern.selectors.mainImage);
-      }
+    
+    // Fallback when some nested elements intercept hover; mouseover bubbles
+    node.addEventListener("mouseover", (_ev: Event) => {
+      _ev.preventDefault();
+      // Only apply if main image isn't already the try-on image
+      const mainImageEls = document.querySelectorAll(
+        pattern.selectors.mainImage 
+      ) as NodeListOf<HTMLImageElement>;
+      mainImageEls.forEach((mainImageEl) => {
+        if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
+          mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
+          mainImageEl.src = imageUrl;
+        }
+      });
+      console.log("The Closet: Try-on image hover - main image replaced.");
     });
 
     // Append to the thumbnail list
