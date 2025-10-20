@@ -1,12 +1,13 @@
 interface ProductPatternJSON {
   urlPattern: string;
+  mouseOverTransition?: boolean;
   selectors: {
     titleSelector: string;
     insertTarget: string;
     mainImage: string;
     priceSelector: string;
-    thumbnailList?: string;
-    thumbnailItem?: string;
+    thumbnailList: string;
+    thumbnailItem: string;
     videoThumbnail?: string;
   };
   injectTemplate?: string;
@@ -18,13 +19,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   // Product page detection patterns for different e-commerce sites
   interface ProductPattern {
     urlPattern: RegExp;
+    mouseOverTransition?: boolean;
     selectors: {
       titleSelector: string;
       insertTarget: string;
       mainImage: string;
       priceSelector: string;
-      thumbnailList?: string;
-      thumbnailItem?: string;
+      thumbnailList: string;
+      thumbnailItem: string;
       videoThumbnail?: string;
     };
     injectTemplate?: string; // HTML snippet to inject a thumbnail/button
@@ -259,7 +261,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (hostname.includes("target")) return "target";
     if (hostname.includes("etsy")) return "etsy";
     if (hostname.includes("shopify")) return "shopify";
-    if (hostname.includes("hm.com")) return "hm";
+    if (hostname.includes("hm.com")) return "H&M";
     return "n/a";
   }
   /**
@@ -295,11 +297,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     // Check if product elements exist
     const title = document.querySelector(pattern.selectors.titleSelector);
-    const image = document.querySelector(pattern.selectors.mainImage);
+    const imageList = document.querySelector(pattern.selectors.thumbnailList);
 
-    console.info("The Closet: Detected product elements", { title, image });
+    console.info("The Closet: Detected product elements", { title, image: imageList });
 
-    return !!(title && image);
+    return !!(title && imageList);
   }
   /**
    * Checks if the current product page is likely an apparel page based on title keywords.
@@ -677,38 +679,40 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
-    // Fallback when some nested elements intercept hover; mouseover bubbles
-    node.addEventListener("mouseover", (_ev: Event) => {
-      _ev.preventDefault();
-      // Only apply if main image isn't already the try-on image
-      const mainImageEls = document.querySelectorAll(
-        pattern.selectors.mainImage 
-      ) as NodeListOf<HTMLImageElement>;
-      mainImageEls.forEach((mainImageEl) => {
-        if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
-          mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
-          mainImageEl.src = imageUrl;
-        }
-      });
-      console.log("The Closet: Try-on image hover - main image replaced.");
-    });
-
-    node.addEventListener("mouseleave", (_ev: Event) => {
-      const mainImageEls = document.querySelectorAll(
-        pattern.selectors.mainImage
-      ) as NodeListOf<HTMLImageElement>;
-      mainImageEls.forEach((mainImageEl) => {
-        if (mainImageEl) {
-          const original = mainImageEl.dataset.originalSrc || "";
-          if (original) {
-            mainImageEl.src = original;
+    if (pattern.mouseOverTransition) {
+      // Fallback when some nested elements intercept hover; mouseover bubbles
+      node.addEventListener("mouseover", (_ev: Event) => {
+        _ev.preventDefault();
+        // Only apply if main image isn't already the try-on image
+        const mainImageEls = document.querySelectorAll(
+          pattern.selectors.mainImage 
+        ) as NodeListOf<HTMLImageElement>;
+        mainImageEls.forEach((mainImageEl) => {
+          if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
+            mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
+            mainImageEl.src = imageUrl;
           }
-        }
+        });
+        console.log("The Closet: Try-on image hover - main image replaced.");
       });
-    });
+
+      node.addEventListener("mouseleave", (_ev: Event) => {
+        const mainImageEls = document.querySelectorAll(
+          pattern.selectors.mainImage
+        ) as NodeListOf<HTMLImageElement>;
+        mainImageEls.forEach((mainImageEl) => {
+          if (mainImageEl) {
+            const original = mainImageEl.dataset.originalSrc || "";
+            if (original) {
+              mainImageEl.src = original;
+            }
+          }
+        });
+      });
+    }
 
     // Append to the thumbnail list
-    listEl.appendChild(node);
+    listEl.insertBefore(node, listEl.firstChild);
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
   }

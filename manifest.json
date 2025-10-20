@@ -21,7 +21,8 @@
     "*://*.asos.com/*",
     "*://*.nike.com/*",
     "*://*.adidas.com/*",
-    "*://*.supabase.co/*"
+    "*://*.supabase.co/*",
+    "*://*.hm.com/*"
   ],
   "content_scripts": [
     {
