@@ -292,7 +292,7 @@ async function handleImageUpload(imageData: string, mimeType: string) {
 
 async function processTryon(product: ProductInfo) {
   // store the product in the clothing_items table
-  const { clothing_id, error } = await saveTryonProduct(product);
+  const { clothing_id, error } = await saveOrFetchTryonProduct(product);
   if (error) {
     throw new Error(`Failed to save product: ${error}`);
   }
@@ -311,17 +311,35 @@ async function processTryon(product: ProductInfo) {
   }
 }
 
-async function saveTryonProduct(product: ProductInfo) {
+async function saveOrFetchTryonProduct(product: ProductInfo) {
   // get the userId from storage
-  const result = await chrome.storage.local.get(["userId"]);
-  const userId = result.userId;
-  // store the product in the clothing_items table
+  const { userId } = await chrome.storage.local.get(["userId"]);
+  if (!userId) {
+    return { error: "User not authenticated" };
+  }
+  // Not found, insert a new record
   const { data, error } = await supabase
     .from("clothing_items")
-    .insert([{ user_id: userId, title: product.title, image_url: product.image }])
+    .insert([
+      { user_id: userId, title: product.title, image_url: product.image },
+    ])
     .select("id")
     .single();
-  if (error){
+
+  if (error) {
+    if(error.code === "23505") {
+      // unique violation, fetch the existing record
+      const { data: existingData, error: fetchError } = await supabase
+        .from("clothing_items")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("image_url", product.image)
+        .single();
+      if(fetchError) {
+        return { error: `Error fetching existing clothing item: ${fetchError.message}` };
+      }
+      return { clothing_id: existingData.id };
+    }
     return { error: `Error inserting clothing item: ${error.message}` };
   }
   return { clothing_id: data.id };

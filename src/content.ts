@@ -622,10 +622,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!response.success) {
       throw new Error("Try-on processing failed: " + response.error);
     }
-    console.log("The Closet: Try-on processing successful", response.publicUrl);
+    console.log("The Closet: Try-on processing successful", response.signedUrl);
     // If a public URL is returned, inject the generated image into the page's thumbnail list
-    if (response.publicUrl) {
-      const injected = injectTryonImage(response.publicUrl as string);
+    if (response.signedUrl) {
+      const injected = injectTryonImage(response.signedUrl as string);
       if (!injected) {
         console.warn(
           "The Closet: injectTryonImage failed or not supported for this site."
