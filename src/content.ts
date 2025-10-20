@@ -677,6 +677,18 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
+    //TODO: Add on click event here to change the main image to this try-on image
+    node.addEventListener("click", () => {
+      const mainImageEl = document.querySelector(
+        pattern.selectors.mainImage
+      ) as HTMLImageElement;
+      if (mainImageEl) {
+        mainImageEl.src = imageUrl;
+      } else {
+        console.warn("The Closet: Main image element not found for selector:", pattern.selectors.mainImage);
+      }
+    });
+
     // Append to the thumbnail list
     listEl.appendChild(node);
     console.log("The Closet: Injected try-on image into thumbnail list.");
