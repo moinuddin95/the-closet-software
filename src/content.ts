@@ -677,7 +677,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
-    
     // Fallback when some nested elements intercept hover; mouseover bubbles
     node.addEventListener("mouseover", (_ev: Event) => {
       _ev.preventDefault();
@@ -692,6 +691,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         }
       });
       console.log("The Closet: Try-on image hover - main image replaced.");
+    });
+
+    node.addEventListener("mouseleave", (_ev: Event) => {
+      const mainImageEls = document.querySelectorAll(
+        pattern.selectors.mainImage
+      ) as NodeListOf<HTMLImageElement>;
+      mainImageEls.forEach((mainImageEl) => {
+        if (mainImageEl) {
+          const original = mainImageEl.dataset.originalSrc || "";
+          if (original) {
+            mainImageEl.src = original;
+          }
+        }
+      });
     });
 
     // Append to the thumbnail list
