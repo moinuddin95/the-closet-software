@@ -261,7 +261,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (hostname.includes("target")) return "target";
     if (hostname.includes("etsy")) return "etsy";
     if (hostname.includes("shopify")) return "shopify";
-    if (hostname.includes("hm.com")) return "H&M";
+    if (hostname.includes("hm.com")) return "hm";
     return "n/a";
   }
   /**
@@ -282,7 +282,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern.urlPattern.test(globalThis.location.href)) {
       return null;
     }
-
     return pattern;
   }
   /**
@@ -299,7 +298,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const title = document.querySelector(pattern.selectors.titleSelector);
     const imageList = document.querySelector(pattern.selectors.thumbnailList);
 
-    console.info("The Closet: Detected product elements", { title, image: imageList });
+    console.info("The Closet: Detected product elements", {
+      title,
+      image: imageList,
+    });
 
     return !!(title && imageList);
   }
@@ -680,16 +682,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     node.dataset.closetInjected = "1";
 
     if (pattern.mouseOverTransition) {
+      console.log(
+        "The Closet: Setting up mouseover transition for try-on image."
+      );
       // Fallback when some nested elements intercept hover; mouseover bubbles
       node.addEventListener("mouseover", (_ev: Event) => {
         _ev.preventDefault();
         // Only apply if main image isn't already the try-on image
         const mainImageEls = document.querySelectorAll(
-          pattern.selectors.mainImage 
+          pattern.selectors.mainImage
         ) as NodeListOf<HTMLImageElement>;
         mainImageEls.forEach((mainImageEl) => {
           if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
-            mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
+            mainImageEl.dataset.originalSrc =
+              mainImageEl.getAttribute("src") || "";
             mainImageEl.src = imageUrl;
           }
         });
@@ -816,6 +822,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           site,
           {
             urlPattern: regexFromString(p.urlPattern),
+            mouseOverTransition: p.mouseOverTransition ?? false,
             selectors: { ...p.selectors },
             injectTemplate: p.injectTemplate,
           },
