@@ -146,7 +146,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }
-
 });
 
 // Handle saving a product
@@ -239,7 +238,10 @@ async function handleImageUpload(imageData: string, mimeType: string) {
       if (imageData.startsWith("data:")) {
         const base64Data = imageData.split(",")[1];
         if (!base64Data) throw new Error("Invalid data URL format");
-        binary = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+        binary = Uint8Array.from(
+          atob(base64Data),
+          (c) => c.codePointAt(0) ?? 0
+        );
       } else {
         const res = await fetch(imageData);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -297,7 +299,7 @@ async function processTryon(product: ProductInfo) {
   // request the edge function to process the clothing id and user image id
   try {
     const userImageId = await chrome.storage.local.get(["userImageId"]);
-    const {data, error} = await supabase.functions.invoke("tryon", {
+    const { data, error } = await supabase.functions.invoke("tryon", {
       body: { clothing_id, user_image_id: userImageId.userImageId },
     });
     if (error) {

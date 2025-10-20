@@ -262,6 +262,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (hostname.includes("etsy")) return "etsy";
     if (hostname.includes("shopify")) return "shopify";
     if (hostname.includes("hm.com")) return "hm";
+    if (hostname.includes("oldnavy")) return "oldnavy";
     return "n/a";
   }
   /**
@@ -337,11 +338,15 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern) return null;
 
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    const imageEl = document.querySelector(pattern.selectors.mainImage);
+    const imageSrc = document.querySelector(pattern.selectors.mainImage)?.getAttribute("src");
+
+    // handle an edge case where imageSrc is relative URL
+    const imageSrcResolved = resolveRelativeImageUrl(imageSrc || "", globalThis.location.href);
+
     const priceEl = document.querySelector(pattern.selectors.priceSelector);
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
-      image: imageEl ? imageEl.getAttribute("src") : "",
+      image: imageSrcResolved,
       price: (function () {
         const text = priceEl?.textContent ?? "";
         const re = /\$\d+(\.\d{2})?/;
@@ -352,6 +357,29 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       site: site,
       timestamp: new Date().toISOString(),
     } as ProductInfo;
+  }
+  function resolveRelativeImageUrl(imageSrc: string, pageUrl: string): string {
+    const absoluteScheme = /^(https?:|data:|blob:)/i;
+    if (imageSrc && !absoluteScheme.test(imageSrc)) {
+      try {
+        imageSrc = new URL(imageSrc, pageUrl).toString();
+      } catch (error_) {
+        try {
+          const base = new URL(pageUrl);
+          const path = imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`;
+          imageSrc = `${base.origin}${path}`;
+        } catch (innerError) {
+          // Fallback: keep original imageSrc if parsing fails; log at debug level
+          console.debug("resolveRelativeImageUrl: failed to resolve relative image URL", {
+            imageSrc,
+            pageUrl,
+            error_,
+            innerError,
+          });
+        }
+      }
+    }
+    return imageSrc;
   }
   /**
    * Injects the button container with `#closet-btns-container` as a next sibling to the insertTarget element.
@@ -862,7 +890,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       // Re-check after DOM changes (for SPAs)
       const observer = new MutationObserver(() => {
         if (!document.getElementById("closet-save-btn")) {
+          injectButtonsContainer();
+          console.log("The Closet: Product page detected");
           injectSaveButton();
+
+          if (isApparelPage()) injectTryonButton();
         }
       });
 
