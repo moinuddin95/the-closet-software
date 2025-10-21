@@ -828,12 +828,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     node.dataset.closetInjected = "1";
 
     if (pattern.mouseOverTransition) {
-      console.log(
-        "The Closet: Setting up mouseover transition for try-on image."
-      );
-      // Fallback when some nested elements intercept hover; mouseover bubbles
-      node.addEventListener("mouseover", (_ev: Event) => {
-        _ev.preventDefault();
+      const replaceImageToTryon = () => {
         // Only apply if main image isn't already the try-on image
         const mainImageEls = document.querySelectorAll<HTMLImageElement>(
           pattern.selectors.mainImage
@@ -846,9 +841,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           }
         }
         console.log("The Closet: Try-on image hover - main image replaced.");
-      });
-
-      node.addEventListener("mouseleave", (_ev: Event) => {
+      };
+      const restoreOriginalImage = () => {
         const mainImageEls = document.querySelectorAll<HTMLImageElement>(
           pattern.selectors.mainImage
         );
@@ -860,7 +854,19 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
             }
           }
         }
+      };
+      // Fallback when some nested elements intercept hover; mouseover bubbles
+      node.addEventListener("mouseover", (_ev: Event) => {
+        _ev.preventDefault();
+        replaceImageToTryon();
       });
+      for(const elem of listEl.querySelectorAll(pattern.selectors.thumbnailItem)) {
+        elem.addEventListener("mouseover", (_ev: Event) => {
+          _ev.preventDefault();
+          restoreOriginalImage();
+        });
+      }
+      replaceImageToTryon();
     }
 
     // Remove any existing injected try-on images to avoid duplicates
