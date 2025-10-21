@@ -328,8 +328,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return false;
   }
   /**
-   * Extracts product information from the page.
-   * Parses the DOM content to retrieve product details.
+   * Extracts and parsed product information from the current page.
+   * Resolves relative image URLs to absolute URLs.
+   * Adding 
    * @returns {ProductInfo | null}
    */
   function extractProductInfo() {
@@ -792,31 +793,31 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       node.addEventListener("mouseover", (_ev: Event) => {
         _ev.preventDefault();
         // Only apply if main image isn't already the try-on image
-        const mainImageEls = document.querySelectorAll(
+        const mainImageEls = document.querySelectorAll<HTMLImageElement>(
           pattern.selectors.mainImage
-        ) as NodeListOf<HTMLImageElement>;
-        mainImageEls.forEach((mainImageEl) => {
+        );
+        for (const mainImageEl of mainImageEls) {
           if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
             mainImageEl.dataset.originalSrc =
               mainImageEl.getAttribute("src") || "";
             mainImageEl.src = imageUrl;
           }
-        });
+        }
         console.log("The Closet: Try-on image hover - main image replaced.");
       });
 
       node.addEventListener("mouseleave", (_ev: Event) => {
-        const mainImageEls = document.querySelectorAll(
+        const mainImageEls = document.querySelectorAll<HTMLImageElement>(
           pattern.selectors.mainImage
-        ) as NodeListOf<HTMLImageElement>;
-        mainImageEls.forEach((mainImageEl) => {
+        );
+        for (const mainImageEl of mainImageEls) {
           if (mainImageEl) {
             const original = mainImageEl.dataset.originalSrc || "";
             if (original) {
               mainImageEl.src = original;
             }
           }
-        });
+        }
       });
     }
 
