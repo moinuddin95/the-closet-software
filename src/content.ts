@@ -999,6 +999,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         if (response.success && response.signedUrl) {
           const injected = injectTryonImage(response.signedUrl as string);
         }
+        const tryonBtn = document.querySelector<HTMLButtonElement>("#closet-tryon-btn");
+        if (tryonBtn) tryonBtn.textContent = "Try On Again";
       })
       .catch((e) => {
         console.error("The Closet: Error loading existing try-on image", e);
