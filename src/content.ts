@@ -339,13 +339,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern) return null;
 
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    const imageSrc = document
-      .querySelector(pattern.selectors.mainImage)
-      ?.getAttribute("src");
+    const imageEl = document
+      .querySelector(`img[data-closet-main-image=1], ${pattern.selectors.mainImage}`);
+
+    imageEl?.setAttribute("data-closet-main-image", "1");
 
     // handle an edge case where imageSrc is relative URL
     const imageSrcResolved = resolveRelativeImageUrl(
-      imageSrc || "",
+      imageEl?.getAttribute("src") || "",
       globalThis.location.href
     );
 
