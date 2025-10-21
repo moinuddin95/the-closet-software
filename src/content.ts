@@ -592,35 +592,65 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    */
   async function handleTryonClick(event: Event) {
     event.preventDefault();
+    const tryonButton = document.querySelector(
+      "#closet-tryon-btn"
+    ) as HTMLButtonElement | null;
+    const originalHTML = tryonButton?.innerHTML;
+    let animTimer: number | null = null;
+
+    // Start a simple "Trying..." dots animation on the button textContent
+    const startTryingAnimation = () => {
+      if (!tryonButton) return;
+      let dots = 0; // 0..2 -> 1,2,3 dots visual
+      const tick = () => {
+        dots = (dots % 3) + 1;
+        tryonButton.textContent = `Trying${".".repeat(dots)}`;
+      };
+      tick();
+      animTimer = window.setInterval(tick, 400);
+    };
+
+    const stopTryingAnimation = () => {
+      if (animTimer !== null) {
+        window.clearInterval(animTimer);
+        animTimer = null;
+      }
+      if (tryonButton && originalHTML != null) {
+        tryonButton.innerHTML = originalHTML;
+      }
+    };
+
+    tryonButton?.setAttribute("disabled", "true");
     try {
       let userImageId: string | null | undefined = undefined;
-      try {
-        const resp = await chrome.runtime.sendMessage({
-          action: "getuserImageId",
-        });
-        userImageId = resp?.userImageId;
-      } catch (e) {
-        console.error(
-          "The Closet: Failed to get userImageId; will show upload popup as fallback.",
-          e
-        );
-      }
+      const resp = await chrome.runtime.sendMessage({
+        action: "getuserImageId",
+      });
+      userImageId = resp?.userImageId;
 
       if (userImageId) {
         try {
           // If a user image is already present, proceed with try-on flow without showing upload UI
+          startTryingAnimation();
           await processTryon();
         } catch (e) {
           console.error("The Closet: processTryon failed:", e);
           // Optional: surface a user message or fallback to upload
           // await injectTryonImageUploadPopup();
+        } finally {
+          // Ensure animation stops regardless of success or failure
+          stopTryingAnimation();
         }
-        return;
+      } else {
+        // No user image yet; inject upload popup
+        injectTryonImageUploadPopup();
       }
-      // No user image yet; inject upload popup
-      injectTryonImageUploadPopup();
     } catch (e) {
       console.error("The Closet: handleTryonClick error:", e);
+    } finally {
+      // Safety: stop animation if still running (e.g., unexpected paths)
+      stopTryingAnimation();
+      tryonButton?.removeAttribute("disabled");
     }
   }
   /**
