@@ -330,7 +330,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   /**
    * Extracts and parsed product information from the current page.
    * Resolves relative image URLs to absolute URLs.
-   * Adding 
+   * Adding
    * @returns {ProductInfo | null}
    */
   function extractProductInfo() {
@@ -339,10 +339,15 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern) return null;
 
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    const imageEl = document
-      .querySelector(`img[data-closet-main-image=1], ${pattern.selectors.mainImage}`);
+    let imageEl =
+      document.querySelector<HTMLImageElement>(
+        'img[data-closet-main-image="1"]'
+      ) ??
+      document.querySelector<HTMLImageElement>(pattern.selectors.mainImage);
 
     imageEl?.setAttribute("data-closet-main-image", "1");
+
+    console.info("The Closet: Extracting product info", imageEl);
 
     // handle an edge case where imageSrc is relative URL
     const imageSrcResolved = resolveRelativeImageUrl(
@@ -365,6 +370,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       timestamp: new Date().toISOString(),
     } as ProductInfo;
   }
+  /**
+   * Resolves a relative image URL to an absolute URL.
+   * @param imageSrc The relative image URL.
+   * @param pageUrl The URL of the page containing the image.
+   * @returns The resolved absolute image URL.
+   */
   function resolveRelativeImageUrl(imageSrc: string, pageUrl: string): string {
     const absoluteScheme = /^(https?:|data:|blob:)/i;
     if (imageSrc && !absoluteScheme.test(imageSrc)) {
@@ -821,6 +832,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         }
       });
     }
+
+    // Remove any existing injected try-on images to avoid duplicates
+    const existingInjected = listEl.querySelectorAll(
+      '[data-closet-injected="1"]'
+    );
+    existingInjected.forEach((el) => el.remove());
 
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
