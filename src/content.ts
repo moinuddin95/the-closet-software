@@ -338,10 +338,15 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern) return null;
 
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    const imageSrc = document.querySelector(pattern.selectors.mainImage)?.getAttribute("src");
+    const imageSrc = document
+      .querySelector(pattern.selectors.mainImage)
+      ?.getAttribute("src");
 
     // handle an edge case where imageSrc is relative URL
-    const imageSrcResolved = resolveRelativeImageUrl(imageSrc || "", globalThis.location.href);
+    const imageSrcResolved = resolveRelativeImageUrl(
+      imageSrc || "",
+      globalThis.location.href
+    );
 
     const priceEl = document.querySelector(pattern.selectors.priceSelector);
     return {
@@ -370,12 +375,15 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           imageSrc = `${base.origin}${path}`;
         } catch (innerError) {
           // Fallback: keep original imageSrc if parsing fails; log at debug level
-          console.debug("resolveRelativeImageUrl: failed to resolve relative image URL", {
-            imageSrc,
-            pageUrl,
-            error_,
-            innerError,
-          });
+          console.debug(
+            "resolveRelativeImageUrl: failed to resolve relative image URL",
+            {
+              imageSrc,
+              pageUrl,
+              error_,
+              innerError,
+            }
+          );
         }
       }
     }
@@ -603,6 +611,71 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
+   * Helper: show a top-center toast (auto-dismiss)
+   * @param message
+   */
+  const showTopToast = (message: string) => {
+    // Ensure container exists
+    let container = document.getElementById(
+      "closet-toast-container"
+    ) as HTMLDivElement | null;
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "closet-toast-container";
+      container.style.position = "fixed";
+      container.style.top = "16px";
+      container.style.left = "50%";
+      container.style.transform = "translateX(-50%)";
+      container.style.zIndex = "2147483647"; // on top
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+      container.style.gap = "8px";
+      container.style.alignItems = "center";
+      container.style.pointerEvents = "none";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.textContent = message;
+    // Style consistent with app's gradient + readable contrast (error tone)
+    toast.style.background =
+      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
+    toast.style.color = "#ffffff";
+    toast.style.padding = "10px 14px";
+    toast.style.borderRadius = "8px";
+    toast.style.fontFamily =
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
+    toast.style.fontSize = "14px";
+    toast.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(-8px)";
+    toast.style.transition = "opacity 200ms ease, transform 200ms ease";
+    toast.style.pointerEvents = "auto";
+
+    container.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translateY(0)";
+    });
+
+    // Auto dismiss
+    const remove = () => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-8px)";
+      setTimeout(() => {
+        toast.remove();
+        if (container && container.childElementCount === 0) {
+          container.remove();
+        }
+      }, 220);
+    };
+    setTimeout(remove, 3500);
+  };
+  /**
    * Processes the try-on request by extracting product info via `extractProductInfo()`.
    * Sends the product info to the background script for processing.
    * Message: `{ action: "processTryon", product: ProductInfo }`
@@ -619,10 +692,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       action: "processTryon",
       product,
     });
+
     if (!response.success) {
       throw new Error("Try-on processing failed: " + response.error);
     }
-    console.log("The Closet: Try-on processing successful", response.signedUrl);
+    console.log("The Closet: Try-on processing successful", response);
     // If a public URL is returned, inject the generated image into the page's thumbnail list
     if (response.signedUrl) {
       const injected = injectTryonImage(response.signedUrl as string);
@@ -631,9 +705,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           "The Closet: injectTryonImage failed or not supported for this site."
         );
       }
+    } else if (response.limitExceeded) {
+      showTopToast("Image unsupported. Please upload a new photo.");
     }
   }
-
   /**
    * Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate.
    * The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}
