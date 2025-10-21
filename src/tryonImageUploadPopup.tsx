@@ -52,11 +52,7 @@ export function TryonImageUploadPopup() {
             type: "success",
             message: "Image uploaded successfully!",
           });
-          // Clear file after successful upload
-          setTimeout(() => {
-            setSelectedFile(null);
-            setUploadStatus({ type: null, message: "" });
-          }, 2000);
+          onClose();
         } else {
           setUploadStatus({
             type: "error",

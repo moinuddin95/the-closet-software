@@ -860,7 +860,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         _ev.preventDefault();
         replaceImageToTryon();
       });
-      for(const elem of listEl.querySelectorAll(pattern.selectors.thumbnailItem)) {
+      for (const elem of listEl.querySelectorAll(
+        pattern.selectors.thumbnailItem
+      )) {
         elem.addEventListener("mouseover", (_ev: Event) => {
           _ev.preventDefault();
           restoreOriginalImage();
@@ -877,6 +879,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
+
+    const tryonBtn =
+      document.querySelector<HTMLButtonElement>("#closet-tryon-btn");
+    if (tryonBtn) tryonBtn.textContent = "Try On Again";
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
   }
@@ -950,6 +956,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           detail: response,
         });
         document.dispatchEvent(responseEvent);
+        handleTryonClick(new Event("click"));
       } catch (error: any) {
         console.error("The Closet: Error uploading image:", error);
         // Send error response back to popup
@@ -999,8 +1006,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         if (response.success && response.signedUrl) {
           const injected = injectTryonImage(response.signedUrl as string);
         }
-        const tryonBtn = document.querySelector<HTMLButtonElement>("#closet-tryon-btn");
-        if (tryonBtn) tryonBtn.textContent = "Try On Again";
       })
       .catch((e) => {
         console.error("The Closet: Error loading existing try-on image", e);
