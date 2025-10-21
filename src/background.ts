@@ -146,6 +146,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
   }
+  if (request.action === "getTryonImageIfExists") {
+    getTryonImageIfExists(request.product)
+      .then((data) => sendResponse(data))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
 });
 
 // Handle saving a product
@@ -343,6 +349,46 @@ async function saveOrFetchTryonProduct(product: ProductInfo) {
     return { error: `Error inserting clothing item: ${error.message}` };
   }
   return { clothing_id: data.id };
+}
+/**
+ * Get the try-on image URL if it exists for the given product.
+ * @param product The product information.
+ * @returns The try-on image URL or an error message.
+ */
+async function getTryonImageIfExists(product: ProductInfo) {
+  // check if clothing item exists for this user and product image
+  const userId = (await chrome.storage.local.get(["userId"])).userId;
+  if (!userId) {
+    return { success: false, error: "User not authenticated" };
+  }
+  const { data, error } = await supabase
+      .from("clothing_items")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("image_url", product.image)
+      .maybeSingle();
+  if (error || !data) {
+    return { success: false, error: error?.message || "Image not found" };
+  }
+
+  // clothing item exists, fetch the try-on image from tryon_results table
+  const clothingId = data.id;
+  const userImageId = (await chrome.storage.local.get(["userImageId"])).userImageId;
+  const { data: tryonData, error: tryonError } = await supabase
+      .from("tryon_results")
+      .select("image_url")
+      .eq("clothing_id", clothingId)
+      .eq("user_image_id", userImageId)
+      .single();
+  if (tryonError || !tryonData) {
+    return { success: false, error: tryonError?.message || "Try-on image not found" };
+  }
+
+  const { data: signedUrlData, error: signedUrlError } = await supabase.storage.from("tryon_results").createSignedUrl(tryonData.image_url, 365 * 24 * 60 * 60);
+  if (signedUrlError) {
+    return { success: false, error: signedUrlError.message };
+  }
+  return { success: true, signedUrl: signedUrlData.signedUrl };
 }
 
 // Listen for storage changes

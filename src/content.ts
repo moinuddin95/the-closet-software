@@ -984,6 +984,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       console.error("The Closet: Error loading product patterns", e);
     }
   }
+  async function loadTryonImageIfExists() {
+    const currentProduct = extractProductInfo();
+    if (!currentProduct) return;
+    chrome.runtime
+      .sendMessage({ action: "getTryonImageIfExists", product: currentProduct })
+      .then((response) => {
+        if (response.success && response.signedUrl) {
+          const injected = injectTryonImage(response.signedUrl as string);
+        }
+      })
+      .catch((e) => {
+        console.error("The Closet: Error loading existing try-on image", e);
+      });
+  }
   async function init() {
     // Ensure patterns are loaded first
     await loadPatterns();
@@ -1004,21 +1018,23 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     });
 
     if (isProductPage()) {
-      injectButtonsContainer();
-      console.log("The Closet: Product page detected");
-      injectSaveButton();
+      const productPageInit = async () => {
+        injectButtonsContainer();
+        console.log("The Closet: Product page detected");
+        injectSaveButton();
 
-      if (isApparelPage()) injectTryonButton();
+        if (isApparelPage()) {
+          injectTryonButton();
+          await loadTryonImageIfExists();
+        }
+      };
+      await productPageInit();
       // Inject the save button
 
       // Re-check after DOM changes (for SPAs)
-      const observer = new MutationObserver(() => {
+      const observer = new MutationObserver(async () => {
         if (!document.getElementById("closet-save-btn")) {
-          injectButtonsContainer();
-          console.log("The Closet: Product page detected");
-          injectSaveButton();
-
-          if (isApparelPage()) injectTryonButton();
+          await productPageInit();
         }
       });
 
