@@ -526,14 +526,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Create a wrapper group to host the main button and optional dropdown
     const group = document.createElement("div");
     group.id = "closet-tryon-group";
-    group.style.display = "inline-flex";
-    group.style.alignItems = "stretch";
-    group.style.position = "relative";
+    group.className = "closet-button";
 
     // Create the main try-on button
     const tryonButton = document.createElement("button");
     tryonButton.id = "closet-tryon-btn";
-    tryonButton.className = "closet-button";
     tryonButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
@@ -567,52 +564,17 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         caretBtn.id = "closet-tryon-dropdown-btn";
         caretBtn.setAttribute("aria-haspopup", "menu");
         caretBtn.setAttribute("aria-expanded", "false");
-        // Inline minimal styling to make it look like a split button without touching global CSS
-        caretBtn.style.marginLeft = "6px";
-        caretBtn.style.padding = "0 10px";
-        caretBtn.style.border = "none";
-        caretBtn.style.borderRadius = "8px";
-        caretBtn.style.background =
-          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
-        caretBtn.style.color = "#fff";
-        caretBtn.style.cursor = "pointer";
-        caretBtn.style.display = "inline-flex";
-        caretBtn.style.alignItems = "center";
-        caretBtn.style.fontWeight = "600";
-        caretBtn.style.fontFamily =
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
         caretBtn.textContent = "▾";
 
         // Dropdown menu
         const menu = document.createElement("div");
         menu.id = "closet-tryon-dropdown-menu";
         menu.setAttribute("role", "menu");
-        menu.style.position = "absolute";
-        menu.style.top = "100%";
-        menu.style.right = "0";
-        menu.style.marginTop = "6px";
-        menu.style.minWidth = "160px";
-        menu.style.background = "#fff";
-        menu.style.border = "1px solid #e5e7eb";
-        menu.style.boxShadow = "0 8px 16px rgba(0,0,0,0.12)";
-        menu.style.borderRadius = "8px";
-        menu.style.padding = "6px";
-        menu.style.zIndex = "2147483647";
-        menu.style.display = "none";
 
         const menuItem = document.createElement("button");
         menuItem.type = "button";
         menuItem.textContent = "Replace Image";
         menuItem.setAttribute("role", "menuitem");
-        menuItem.style.width = "100%";
-        menuItem.style.textAlign = "left";
-        menuItem.style.background = "transparent";
-        menuItem.style.border = "none";
-        menuItem.style.padding = "8px 10px";
-        menuItem.style.borderRadius = "6px";
-        menuItem.style.cursor = "pointer";
-        menuItem.style.fontFamily =
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
         menuItem.addEventListener("mouseover", () => {
           menuItem.style.background = "#f3f4f6";
         });
@@ -625,13 +587,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           caretBtn.setAttribute("aria-expanded", "false");
           // Defer the call to a future-implemented handler to avoid TS errors
           //TODO: implement handleReplaceUserImage in globalThis
-          try {
-            const fn = (globalThis as any)["handleReplaceUserImage"];
-            if (typeof fn === "function") fn();
-            else console.warn("handleReplaceUserImage is not implemented yet.");
-          } catch (err) {
-            console.error("Error calling handleReplaceUserImage:", err);
-          }
         });
 
         menu.appendChild(menuItem);
@@ -852,13 +807,15 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const existingInjected = listEl.querySelectorAll(
       '[data-closet-injected="1"]'
     );
-    existingInjected.forEach((el) => el.remove());
+    for (const el of existingInjected) {
+      el.remove();
+    }
 
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
 
     const tryonBtn =
-      document.querySelector<HTMLButtonElement>("#closet-tryon-btn");
+      document.querySelector<HTMLButtonElement>("#closet-tryon-btn > span");
     if (tryonBtn) tryonBtn.textContent = "Try On Again";
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
@@ -989,11 +946,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    */
   async function handleTryonClick(event: Event) {
     event.preventDefault();
-    const tryonButton = document.querySelector(
+    const tryonButton = document.querySelector<HTMLButtonElement>(
       "#closet-tryon-btn"
-    ) as HTMLButtonElement | null;
-    const originalHTML = tryonButton?.innerHTML;
-    let animTimer: number | null = null;
+    );
+  const originalHTML = tryonButton?.innerHTML;
+  let animTimer: ReturnType<typeof setInterval> | null = null;
 
     // Start a simple "Trying..." dots animation on the button textContent
     const startTryingAnimation = () => {
@@ -1004,12 +961,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         tryonButton.textContent = `Trying${".".repeat(dots)}`;
       };
       tick();
-      animTimer = window.setInterval(tick, 400);
+  animTimer = globalThis.setInterval(tick, 400);
     };
 
     const stopTryingAnimation = () => {
       if (animTimer !== null) {
-        window.clearInterval(animTimer);
+  globalThis.clearInterval(animTimer);
         animTimer = null;
       }
       if (tryonButton && originalHTML != null) {
@@ -1137,7 +1094,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       .sendMessage({ action: "getTryonImageIfExists", product: currentProduct })
       .then((response) => {
         if (response.success && response.signedUrl) {
-          const injected = injectTryonImage(response.signedUrl as string);
+          injectTryonImage(response.signedUrl as string);
         }
       })
       .catch((e) => {
