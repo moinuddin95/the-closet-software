@@ -248,6 +248,37 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   // Will be populated after fetching from background
   let PRODUCT_PATTERNS: Record<string, ProductPattern> = {};
 
+  // Pattern-related helper functions
+  /**
+   * Initialize the extension.
+   * @returns {void}
+   */
+  async function loadPatterns() {
+    if (PATTERNS_JSON) return; // already loaded
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "getProductsPattern",
+      });
+      if (!response?.success || !response?.patterns) {
+        console.error("The Closet: Failed to load product patterns", response);
+        return;
+      }
+      PATTERNS_JSON = response.patterns as Record<string, ProductPatternJSON>;
+      PRODUCT_PATTERNS = Object.fromEntries(
+        Object.entries(PATTERNS_JSON).map(([site, p]) => [
+          site,
+          {
+            urlPattern: regexFromString(p.urlPattern),
+            mouseOverTransition: p.mouseOverTransition ?? false,
+            selectors: { ...p.selectors },
+            injectTemplate: p.injectTemplate,
+          },
+        ])
+      );
+    } catch (e) {
+      console.error("The Closet: Error loading product patterns", e);
+    }
+  }
   /**
    * Detects the current e-commerce site based on the window's hostname.
    *
@@ -327,6 +358,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.log("The Closet: Not an apparel page");
     return false;
   }
+
+  // Parsing helpers
   /**
    * Extracts and parsed product information from the current page.
    * Resolves relative image URLs to absolute URLs.
@@ -402,6 +435,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     return imageSrc;
   }
+
+  // UI Injection functions
   /**
    * Injects the button container with `#closet-btns-container` as a next sibling to the insertTarget element.
    * @returns {void}
@@ -462,7 +497,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1a.5.5 0 0 1 .5.5V7h5.5a.5.5 0 0 1 0 1H8.5v5.5a.5.5 0 0 1-1 0V8H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
       </svg>
-      <span>Save Secretly</span>
+      <span>Save</span>
     `;
 
     // Add click handler
@@ -509,149 +544,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     buttonContainer.appendChild(tryonButton);
 
     console.log("The Closet: Try on button injected successfully");
-  }
-  /**
-   * Gets the product info by calling `extractProductInfo()`.
-   * Sends a message to the background script to save the current product.
-   * Message: `{ action: "saveProduct", product: ProductInfo }`
-   * @param {*} event
-   * @return {Promise<void>}
-   */
-  async function handleSaveClick(event: Event) {
-    event.preventDefault();
-
-    const button = event.currentTarget as HTMLButtonElement;
-    const originalContent = button.innerHTML;
-
-    // Show loading state
-    button.classList.add("closet-saving");
-    button.disabled = true;
-    button.innerHTML = `
-      <svg class="closet-spinner" width="16" height="16" viewBox="0 0 16 16">
-        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="30" />
-      </svg>
-      <span>Saving...</span>
-    `;
-
-    try {
-      const productInfo = extractProductInfo();
-      if (!productInfo) throw new Error("Failed to extract product info");
-
-      // Save via background script
-
-      const response = await chrome.runtime.sendMessage({
-        action: "saveProduct",
-        product: productInfo,
-      });
-
-      console.log("The Closet: Save product response", response);
-
-      if (!response.success)
-        throw new Error("Failed to save product, response error", response);
-
-      // Show success state
-      button.classList.remove("closet-saving");
-      button.classList.add("closet-saved");
-      button.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-        </svg>
-        <span>Saved!</span>
-      `;
-
-      // Reset button after 2 seconds
-      setTimeout(() => {
-        button.disabled = false;
-        button.classList.remove("closet-saved");
-        button.innerHTML = originalContent;
-      }, 2000);
-    } catch (error) {
-      console.error("The Closet: Error saving product:", error);
-
-      // Show error state
-      button.classList.remove("closet-saving");
-      button.classList.add("closet-error");
-      button.innerHTML = `
-        <span>Error! Try again</span>
-      `;
-
-      // Reset button after 2 seconds
-      setTimeout(() => {
-        button.disabled = false;
-        button.classList.remove("closet-error");
-        button.innerHTML = originalContent;
-      }, 2000);
-    }
-  }
-  /**
-   * Checks if userImageId exists by sending a message to the background script.
-   * Message: `{ action: "getuserImageId" }`
-   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
-   * @param event The click event.
-   * @returns {Promise<void>}
-   */
-  async function handleTryonClick(event: Event) {
-    event.preventDefault();
-    const tryonButton = document.querySelector(
-      "#closet-tryon-btn"
-    ) as HTMLButtonElement | null;
-    const originalHTML = tryonButton?.innerHTML;
-    let animTimer: number | null = null;
-
-    // Start a simple "Trying..." dots animation on the button textContent
-    const startTryingAnimation = () => {
-      if (!tryonButton) return;
-      let dots = 0; // 0..2 -> 1,2,3 dots visual
-      const tick = () => {
-        dots = (dots % 3) + 1;
-        tryonButton.textContent = `Trying${".".repeat(dots)}`;
-      };
-      tick();
-      animTimer = window.setInterval(tick, 400);
-    };
-
-    const stopTryingAnimation = () => {
-      if (animTimer !== null) {
-        window.clearInterval(animTimer);
-        animTimer = null;
-      }
-      if (tryonButton && originalHTML != null) {
-        tryonButton.innerHTML = originalHTML;
-      }
-    };
-
-    tryonButton?.setAttribute("disabled", "true");
-    try {
-      let userImageId: string | null | undefined = undefined;
-      const resp = await chrome.runtime.sendMessage({
-        action: "getuserImageId",
-      });
-      userImageId = resp?.userImageId;
-
-      if (userImageId) {
-        try {
-          // If a user image is already present, proceed with try-on flow without showing upload UI
-          startTryingAnimation();
-          await processTryon();
-        } catch (e) {
-          console.error("The Closet: processTryon failed:", e);
-          // Optional: surface a user message or fallback to upload
-          // await injectTryonImageUploadPopup();
-        } finally {
-          // Ensure animation stops regardless of success or failure
-          stopTryingAnimation();
-        }
-      } else {
-        // No user image yet; inject upload popup
-        injectTryonImageUploadPopup();
-      }
-    } catch (e) {
-      console.error("The Closet: handleTryonClick error:", e);
-    } finally {
-      // Safety: stop animation if still running (e.g., unexpected paths)
-      stopTryingAnimation();
-      tryonButton?.removeAttribute("disabled");
-    }
   }
   /**
    * Helper: show a top-center toast (auto-dismiss)
@@ -718,40 +610,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     };
     setTimeout(remove, 3500);
   };
-  /**
-   * Processes the try-on request by extracting product info via `extractProductInfo()`.
-   * Sends the product info to the background script for processing.
-   * Message: `{ action: "processTryon", product: ProductInfo }`
-   * @returns {Promise<void>}
-   */
-  async function processTryon() {
-    const product = extractProductInfo();
-    if (!product) throw new Error("Failed to extract product info");
-    // Send to background script
-    console.log("The Closet: Sending product for try-on processing", {
-      product,
-    });
-    const response = await chrome.runtime.sendMessage({
-      action: "processTryon",
-      product,
-    });
-
-    if (!response.success) {
-      throw new Error("Try-on processing failed: " + response.error);
-    }
-    console.log("The Closet: Try-on processing successful", response);
-    // If a public URL is returned, inject the generated image into the page's thumbnail list
-    if (response.signedUrl) {
-      const injected = injectTryonImage(response.signedUrl as string);
-      if (!injected) {
-        console.warn(
-          "The Closet: injectTryonImage failed or not supported for this site."
-        );
-      }
-    } else if (response.limitExceeded) {
-      showTopToast("Image unsupported. Please upload a new photo.");
-    }
-  }
   /**
    * Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate.
    * The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}
@@ -928,6 +786,185 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Set up listener for image upload events from the popup
     setupImageUploadListener();
   }
+
+  // Event Handlers
+  /**
+   * Checks if userImageId exists by sending a message to the background script.
+   * Message: `{ action: "getuserImageId" }`
+   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
+   * @param event The click event.
+   * @returns {Promise<void>}
+   */
+  async function handleSaveClick(event: Event) {
+    event.preventDefault();
+
+    const button = event.currentTarget as HTMLButtonElement;
+    const originalContent = button.innerHTML;
+
+    // Show loading state
+    button.classList.add("closet-saving");
+    button.disabled = true;
+    button.innerHTML = `
+      <svg class="closet-spinner" width="16" height="16" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="30" />
+      </svg>
+      <span>Saving...</span>
+    `;
+
+    try {
+      const productInfo = extractProductInfo();
+      if (!productInfo) throw new Error("Failed to extract product info");
+
+      // Save via background script
+
+      const response = await chrome.runtime.sendMessage({
+        action: "saveProduct",
+        product: productInfo,
+      });
+
+      console.log("The Closet: Save product response", response);
+
+      if (!response.success)
+        throw new Error("Failed to save product, response error", response);
+
+      // Show success state
+      button.classList.remove("closet-saving");
+      button.classList.add("closet-saved");
+      button.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+        </svg>
+        <span>Saved!</span>
+      `;
+
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        button.disabled = false;
+        button.classList.remove("closet-saved");
+        button.innerHTML = originalContent;
+      }, 2000);
+    } catch (error) {
+      console.error("The Closet: Error saving product:", error);
+
+      // Show error state
+      button.classList.remove("closet-saving");
+      button.classList.add("closet-error");
+      button.innerHTML = `
+        <span>Error! Try again</span>
+      `;
+
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        button.disabled = false;
+        button.classList.remove("closet-error");
+        button.innerHTML = originalContent;
+      }, 2000);
+    }
+  }
+  /**
+   * Checks if userImageId exists by sending a message to the background script.
+   * Message: `{ action: "getuserImageId" }`
+   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
+   * @param event The click event.
+   * @returns {Promise<void>}
+   */
+  async function handleTryonClick(event: Event) {
+    event.preventDefault();
+    const tryonButton = document.querySelector(
+      "#closet-tryon-btn"
+    ) as HTMLButtonElement | null;
+    const originalHTML = tryonButton?.innerHTML;
+    let animTimer: number | null = null;
+
+    // Start a simple "Trying..." dots animation on the button textContent
+    const startTryingAnimation = () => {
+      if (!tryonButton) return;
+      let dots = 0; // 0..2 -> 1,2,3 dots visual
+      const tick = () => {
+        dots = (dots % 3) + 1;
+        tryonButton.textContent = `Trying${".".repeat(dots)}`;
+      };
+      tick();
+      animTimer = window.setInterval(tick, 400);
+    };
+
+    const stopTryingAnimation = () => {
+      if (animTimer !== null) {
+        window.clearInterval(animTimer);
+        animTimer = null;
+      }
+      if (tryonButton && originalHTML != null) {
+        tryonButton.innerHTML = originalHTML;
+      }
+    };
+
+    tryonButton?.setAttribute("disabled", "true");
+    try {
+      let userImageId: string | null | undefined = undefined;
+      const resp = await chrome.runtime.sendMessage({
+        action: "getuserImageId",
+      });
+      userImageId = resp?.userImageId;
+
+      if (userImageId) {
+        try {
+          // If a user image is already present, proceed with try-on flow without showing upload UI
+          startTryingAnimation();
+          await processTryon();
+        } catch (e) {
+          console.error("The Closet: processTryon failed:", e);
+          // Optional: surface a user message or fallback to upload
+          // await injectTryonImageUploadPopup();
+        } finally {
+          // Ensure animation stops regardless of success or failure
+          stopTryingAnimation();
+        }
+      } else {
+        // No user image yet; inject upload popup
+        injectTryonImageUploadPopup();
+      }
+    } catch (e) {
+      console.error("The Closet: handleTryonClick error:", e);
+    } finally {
+      // Safety: stop animation if still running (e.g., unexpected paths)
+      stopTryingAnimation();
+      tryonButton?.removeAttribute("disabled");
+    }
+  }
+  /**
+   * Processes the try-on request by extracting product info via `extractProductInfo()`.
+   * Sends the product info to the background script for processing.
+   * Message: `{ action: "processTryon", product: ProductInfo }`
+   * @returns {Promise<void>}
+   */
+  async function processTryon() {
+    const product = extractProductInfo();
+    if (!product) throw new Error("Failed to extract product info");
+    // Send to background script
+    console.log("The Closet: Sending product for try-on processing", {
+      product,
+    });
+    const response = await chrome.runtime.sendMessage({
+      action: "processTryon",
+      product,
+    });
+
+    if (!response.success) {
+      throw new Error("Try-on processing failed: " + response.error);
+    }
+    console.log("The Closet: Try-on processing successful", response);
+    // If a public URL is returned, inject the generated image into the page's thumbnail list
+    if (response.signedUrl) {
+      const injected = injectTryonImage(response.signedUrl as string);
+      if (!injected) {
+        console.warn(
+          "The Closet: injectTryonImage failed or not supported for this site."
+        );
+      }
+    } else if (response.limitExceeded) {
+      showTopToast("Image unsupported. Please upload a new photo.");
+    }
+  }
   /**
    * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.
    * Event.detail should contain `{ image: string, mimeType: string }`.
@@ -968,35 +1005,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     });
   }
   /**
-   * Initialize the extension.
-   * @returns {void}
+   * Returns a signed URL of an existing try-on image for the current product if it exists.
+   * Calls `injectTryonImage()` to insert the image into the page if found.
+   * @returns {Promise<void>}
    */
-  async function loadPatterns(): Promise<void> {
-    if (PATTERNS_JSON) return; // already loaded
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: "getProductsPattern",
-      });
-      if (!response?.success || !response?.patterns) {
-        console.error("The Closet: Failed to load product patterns", response);
-        return;
-      }
-      PATTERNS_JSON = response.patterns as Record<string, ProductPatternJSON>;
-      PRODUCT_PATTERNS = Object.fromEntries(
-        Object.entries(PATTERNS_JSON).map(([site, p]) => [
-          site,
-          {
-            urlPattern: regexFromString(p.urlPattern),
-            mouseOverTransition: p.mouseOverTransition ?? false,
-            selectors: { ...p.selectors },
-            injectTemplate: p.injectTemplate,
-          },
-        ])
-      );
-    } catch (e) {
-      console.error("The Closet: Error loading product patterns", e);
-    }
-  }
   async function loadTryonImageIfExists() {
     const currentProduct = extractProductInfo();
     if (!currentProduct) return;
@@ -1011,6 +1023,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         console.error("The Closet: Error loading existing try-on image", e);
       });
   }
+  
+  /**
+   * Main initialization function.
+   * Loads product patterns, checks if on a product page, and injects UI elements accordingly.
+   * @returns {Promise<void>}
+   */
   async function init() {
     // Ensure patterns are loaded first
     await loadPatterns();
