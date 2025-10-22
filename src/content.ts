@@ -523,7 +523,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Select button container
     const buttonContainer = document.querySelector("#closet-btns-container")!;
 
-    // Create the try-on button
+    // Create a wrapper group to host the main button and optional dropdown
+    const group = document.createElement("div");
+    group.id = "closet-tryon-group";
+    group.style.display = "inline-flex";
+    group.style.alignItems = "stretch";
+    group.style.position = "relative";
+
+    // Create the main try-on button
     const tryonButton = document.createElement("button");
     tryonButton.id = "closet-tryon-btn";
     tryonButton.className = "closet-button";
@@ -534,14 +541,126 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       <span>Try On</span>
     `;
 
-    // Add click handler
-    tryonButton.addEventListener(
-      "click",
-      async (e: Event) => await handleTryonClick(e)
-    );
+    // Main click handler remains the same
+    tryonButton.addEventListener("click", async (e: Event) => {
+      await handleTryonClick(e);
+    });
 
-    // Append button to container
-    buttonContainer.appendChild(tryonButton);
+    group.appendChild(tryonButton);
+    buttonContainer.appendChild(group);
+
+    // If userImageId exists, add a small split-dropdown for extra actions (e.g., Replace Image)
+    chrome.runtime
+      .sendMessage({ action: "getuserImageId" })
+      .then((resp) => {
+        const userImageId = resp?.userImageId;
+        if (!userImageId) {
+          console.log(
+            "The Closet: Try-on dropdown not shown (no user image set)."
+          );
+          return;
+        }
+
+        // Create dropdown toggle button
+        const caretBtn = document.createElement("button");
+        caretBtn.type = "button";
+        caretBtn.id = "closet-tryon-dropdown-btn";
+        caretBtn.setAttribute("aria-haspopup", "menu");
+        caretBtn.setAttribute("aria-expanded", "false");
+        // Inline minimal styling to make it look like a split button without touching global CSS
+        caretBtn.style.marginLeft = "6px";
+        caretBtn.style.padding = "0 10px";
+        caretBtn.style.border = "none";
+        caretBtn.style.borderRadius = "8px";
+        caretBtn.style.background =
+          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+        caretBtn.style.color = "#fff";
+        caretBtn.style.cursor = "pointer";
+        caretBtn.style.display = "inline-flex";
+        caretBtn.style.alignItems = "center";
+        caretBtn.style.fontWeight = "600";
+        caretBtn.style.fontFamily =
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
+        caretBtn.textContent = "▾";
+
+        // Dropdown menu
+        const menu = document.createElement("div");
+        menu.id = "closet-tryon-dropdown-menu";
+        menu.setAttribute("role", "menu");
+        menu.style.position = "absolute";
+        menu.style.top = "100%";
+        menu.style.right = "0";
+        menu.style.marginTop = "6px";
+        menu.style.minWidth = "160px";
+        menu.style.background = "#fff";
+        menu.style.border = "1px solid #e5e7eb";
+        menu.style.boxShadow = "0 8px 16px rgba(0,0,0,0.12)";
+        menu.style.borderRadius = "8px";
+        menu.style.padding = "6px";
+        menu.style.zIndex = "2147483647";
+        menu.style.display = "none";
+
+        const menuItem = document.createElement("button");
+        menuItem.type = "button";
+        menuItem.textContent = "Replace Image";
+        menuItem.setAttribute("role", "menuitem");
+        menuItem.style.width = "100%";
+        menuItem.style.textAlign = "left";
+        menuItem.style.background = "transparent";
+        menuItem.style.border = "none";
+        menuItem.style.padding = "8px 10px";
+        menuItem.style.borderRadius = "6px";
+        menuItem.style.cursor = "pointer";
+        menuItem.style.fontFamily =
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
+        menuItem.addEventListener("mouseover", () => {
+          menuItem.style.background = "#f3f4f6";
+        });
+        menuItem.addEventListener("mouseout", () => {
+          menuItem.style.background = "transparent";
+        });
+        menuItem.addEventListener("click", () => {
+          // Close menu first
+          menu.style.display = "none";
+          caretBtn.setAttribute("aria-expanded", "false");
+          // Defer the call to a future-implemented handler to avoid TS errors
+          //TODO: implement handleReplaceUserImage in globalThis
+          try {
+            const fn = (globalThis as any)["handleReplaceUserImage"];
+            if (typeof fn === "function") fn();
+            else console.warn("handleReplaceUserImage is not implemented yet.");
+          } catch (err) {
+            console.error("Error calling handleReplaceUserImage:", err);
+          }
+        });
+
+        menu.appendChild(menuItem);
+        group.appendChild(caretBtn);
+        group.appendChild(menu);
+
+        // Toggle menu on caret click
+        caretBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const open = menu.style.display !== "none";
+          menu.style.display = open ? "none" : "block";
+          caretBtn.setAttribute("aria-expanded", open ? "false" : "true");
+        });
+
+        // Close on outside click
+        const onDocClick = (ev: MouseEvent) => {
+          if (!group.contains(ev.target as Node)) {
+            menu.style.display = "none";
+            caretBtn.setAttribute("aria-expanded", "false");
+          }
+        };
+        document.addEventListener("click", onDocClick);
+      })
+      .catch((e) => {
+        console.warn(
+          "The Closet: Failed to check userImageId for dropdown:",
+          e
+        );
+      });
 
     console.log("The Closet: Try on button injected successfully");
   }
@@ -931,6 +1050,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       tryonButton?.removeAttribute("disabled");
     }
   }
+
+  // Event Controllers
   /**
    * Processes the try-on request by extracting product info via `extractProductInfo()`.
    * Sends the product info to the background script for processing.
@@ -1023,7 +1144,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         console.error("The Closet: Error loading existing try-on image", e);
       });
   }
-  
+
   /**
    * Main initialization function.
    * Loads product patterns, checks if on a product page, and injects UI elements accordingly.
