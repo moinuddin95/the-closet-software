@@ -366,7 +366,8 @@ async function getTryonImageIfExists(product: ProductInfo) {
       .select("id")
       .eq("user_id", userId)
       .eq("image_url", product.image)
-      .maybeSingle();
+      .single();
+  console.log("Clothing item lookup image :", product.image);
   if (error || !data) {
     return { success: false, error: error?.message || "Image not found" };
   }

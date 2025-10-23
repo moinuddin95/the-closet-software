@@ -374,15 +374,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (!pattern) return null;
 
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    let imageEl =
-      document.querySelector<HTMLImageElement>(
-        'img[data-closet-main-image="1"]'
-      ) ??
-      document.querySelector<HTMLImageElement>(pattern.selectors.mainImage);
+    let imageEl = document.querySelector<HTMLImageElement>(
+      'img[data-closet-main-image="1"]'
+    )!;
 
-    imageEl?.setAttribute("data-closet-main-image", "1");
-
-    console.info("The Closet: Extracting product info", imageEl);
+    console.info(
+      "main image tag",
+      document.querySelector('img[data-closet-main-image="1"]')
+    );
 
     // handle an edge case where imageSrc is relative URL
     const imageSrcResolved = resolveRelativeImageUrl(
@@ -716,17 +715,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         ? extractPatternFromListItem(pattern.selectors.thumbnailItem)
         : pattern.injectTemplate;
     const listSelector = pattern.selectors.thumbnailList;
-    if (!template || !listSelector) {
-      // No injection template or no list container selector set for this site
-      return false;
-    }
-
     const listEl = document.querySelector(listSelector);
-    if (!listEl) {
-      console.warn(
-        "The Closet: Thumbnail list element not found for selector:",
-        listSelector
-      );
+
+    if (!template || !listSelector || !listEl) {
+      // No injection template or no list container selector set for this site
       return false;
     }
 
@@ -829,13 +821,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
-
-    const tryonSpan = document.querySelector<HTMLButtonElement>(
-      "#closet-tryon-btn > span"
-    );
-    if (tryonSpan) tryonSpan.textContent = "Try On Again";
-    console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
+  }
+  function updateTryonButtonForRetry() {
+    const injected = !!document.querySelector("[data-closet-injected='1']");
+    const span = document.querySelector<HTMLSpanElement>("#closet-tryon-btn > span");
+    if (injected && span && span.textContent !== "Retry Try On") {
+      span.textContent = "Retry Try On";
+    }
   }
   function extractPatternFromListItem(listItemSelector: string): string {
     const listItemEl = document.querySelector(listItemSelector);
@@ -849,6 +842,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // remove srcset attributes if any
     const srcsetPattern = /\s+srcset\s*=\s*["'][^"']*["']/gi;
     template = template.replaceAll(srcsetPattern, "");
+    template = template.replaceAll('data-closet-main-image="1"', "");
     return template;
   }
   /**
@@ -1117,18 +1111,45 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    * @returns {Promise<void>}
    */
   async function loadTryonImageIfExists() {
+    console.log("The Closet: Checking for existing try-on image");
     const currentProduct = extractProductInfo();
     if (!currentProduct) return;
     chrome.runtime
       .sendMessage({ action: "getTryonImageIfExists", product: currentProduct })
       .then((response) => {
         if (response.success && response.signedUrl) {
-          injectTryonImage(response.signedUrl as string);
+          if (
+            !document
+              .querySelector("[data-closet-injected='1']")
+              ?.innerHTML.includes(response.signedUrl)
+          ) {
+            injectTryonImage(response.signedUrl as string);
+          }
+        } else {
+          document.querySelector("[data-closet-injected='1']")?.remove();
+          console.log(
+            "The Closet: Removing existing try-on image (none found)"
+          );
         }
       })
       .catch((e) => {
         console.error("The Closet: Error loading existing try-on image", e);
       });
+  }
+  function pinMainImage() {
+    const pattern = getSitePattern()!;
+    const mainImageEl = document.querySelector<HTMLElement>(
+      pattern.selectors.mainImage
+    )!;
+    if (mainImageEl) {
+      console.log("running pinMainImage -- this should only be once ");
+      console.log("pinning main image", mainImageEl);
+      mainImageEl.dataset.closetMainImage = "1";
+    } else {
+      console.warn(
+        "The Closet: pinMainImage - main image element not found. WTFFF"
+      );
+    }
   }
 
   /**
@@ -1156,30 +1177,45 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     });
 
     if (isProductPage()) {
-      const productPageInit = async () => {
+      const tryOnBtnsInit = async () => {
         injectButtonsContainer();
         console.log("The Closet: Product page detected");
         injectSaveButton();
 
         if (isApparelPage()) {
+          pinMainImage();
           injectTryonButton();
-          await loadTryonImageIfExists();
+          updateTryonButtonForRetry();
         }
       };
-      await productPageInit();
+      await tryOnBtnsInit();
+      await loadTryonImageIfExists();
       // Inject the save button
 
       // Re-check after DOM changes (for SPAs)
       const observer = new MutationObserver(async () => {
         if (!document.getElementById("closet-save-btn")) {
-          await productPageInit();
+          await tryOnBtnsInit();
         }
       });
-
       observer.observe(document.body, {
         childList: true,
         subtree: true,
       });
+
+      const tryonImageObserver = new MutationObserver(async () => {
+        await loadTryonImageIfExists();
+        updateTryonButtonForRetry();
+      });
+      const listEl = document.querySelector(
+        getSitePattern()?.selectors.thumbnailList!
+      );
+      if (listEl) {
+        tryonImageObserver.observe(listEl, {
+          childList: true,
+          subtree: true,
+        });
+      }
     } else {
       console.log("The Closet: Not a product page");
     }
