@@ -8,7 +8,7 @@
 
 .closet-button {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
   padding: 10px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -20,15 +20,9 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
   cursor: pointer;
-  transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   position: relative;
-  overflow: hidden;
-}
-
-.closet-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
 }
 
 .closet-button:active {
@@ -64,8 +58,14 @@ svg {
 }
 
 #closet-tryon-btn {
-  padding: 10px 20px;
+  padding: 10px 15px 10px 20px;
   border-radius: 8px 0 0 8px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: white;
 }
 
 /* Try-on split button group */
@@ -74,10 +74,11 @@ svg {
   align-items: stretch;
   position: relative;
   padding: 0;
+  gap: 0;
 }
 
 /* Caret dropdown button that pairs with Try On */
-#closet-tryon-dropdown-btn {
+#closet-dropdown-btn {
   padding: 0 10px;
   border: none;
   border-radius: 0 8px 8px 0;
@@ -88,34 +89,47 @@ svg {
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
+  background: transparent;
 }
 
-#closet-tryon-dropdown-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-#closet-tryon-dropdown-menu {
+#closet-dropdown-menu {
   position: absolute;
   top: 100%;
-  right: 0;
+  right: 0px;
   margin-top: 6px;
-  min-width: 160px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  width: fit-content;
+  height: min-content;
+  border: 1px solid rgb(229, 231, 235);
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 8px 16px;
   border-radius: 8px;
-  padding: 6px;
   z-index: 2147483647;
   display: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
-#closet-tryon-dropdown-menu button {
+#closet-dropdown-menu button {
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
-  padding: 8px 10px;
   border-radius: 6px;
   cursor: pointer;
+  padding: 6px 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  color: white;
+}
+
+#closet-dropdown-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+#closet-tryon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+#closet-save-btn:hover {
+  filter: brightness(1.1);
+}
+#closet-dropdown-menu button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Saved state */

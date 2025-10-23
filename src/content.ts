@@ -561,14 +561,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         // Create dropdown toggle button
         const caretBtn = document.createElement("button");
         caretBtn.type = "button";
-        caretBtn.id = "closet-tryon-dropdown-btn";
+        caretBtn.id = "closet-dropdown-btn";
         caretBtn.setAttribute("aria-haspopup", "menu");
         caretBtn.setAttribute("aria-expanded", "false");
         caretBtn.textContent = "▾";
 
         // Dropdown menu
         const menu = document.createElement("div");
-        menu.id = "closet-tryon-dropdown-menu";
+        menu.id = "closet-dropdown-menu";
         menu.setAttribute("role", "menu");
 
         const menuItem = document.createElement("button");
@@ -576,7 +576,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         menuItem.textContent = "Replace Image";
         menuItem.setAttribute("role", "menuitem");
         menuItem.addEventListener("mouseover", () => {
-          menuItem.style.background = "#f3f4f6";
+          menuItem.style.background = "rgba(0, 0, 0, 0.05)";
         });
         menuItem.addEventListener("mouseout", () => {
           menuItem.style.background = "transparent";
@@ -598,6 +598,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           e.preventDefault();
           const open = menu.style.display !== "none";
           menu.style.display = open ? "none" : "block";
+          caretBtn.textContent = open ? "▾" : "▴";
           caretBtn.setAttribute("aria-expanded", open ? "false" : "true");
         });
 
@@ -814,9 +815,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
 
-    const tryonBtn =
+    const tryonSpan =
       document.querySelector<HTMLButtonElement>("#closet-tryon-btn > span");
-    if (tryonBtn) tryonBtn.textContent = "Try On Again";
+    if (tryonSpan) tryonSpan.textContent = "Try On Again";
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
   }
