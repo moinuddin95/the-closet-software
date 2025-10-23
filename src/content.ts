@@ -602,7 +602,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       menu.style.display = "none";
       caretBtn.setAttribute("aria-expanded", "false");
       // Defer the call to a future-implemented handler to avoid TS errors
-      //TODO: implement handleReplaceUserImage in globalThis
+      injectTryonImageUploadPopup();
     });
 
     menu.appendChild(menuItem);
