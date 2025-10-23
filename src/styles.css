@@ -6,25 +6,6 @@
   gap: 10px;
 }
 
-.closet-button {
-  display: inline-flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  position: relative;
-  transition: all 0.3s ease;
-}
-
 .closet-button:active {
   transform: translateY(0);
 }
@@ -57,6 +38,48 @@ svg {
   }
 }
 
+#closet-save-btn {
+  height: 36px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+/*display: inline-flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  position: relative;
+  transition: all 0.3s ease; */
+
+/* Try-on split button group */
+#closet-tryon-group {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  padding: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 #closet-tryon-btn {
   padding: 10px 15px 10px 20px;
   border-radius: 8px 0 0 8px;
@@ -68,28 +91,18 @@ svg {
   color: white;
 }
 
-/* Try-on split button group */
-#closet-tryon-group {
-  display: inline-flex;
-  align-items: stretch;
-  position: relative;
-  padding: 0;
-  gap: 0;
-}
-
 /* Caret dropdown button that pairs with Try On */
 #closet-dropdown-btn {
-  padding: 0 10px;
   border: none;
   border-radius: 0 8px 8px 0;
   color: #fff;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
   background: transparent;
+  height: 36px;
 }
 
 #closet-dropdown-menu {
@@ -106,6 +119,8 @@ svg {
   display: none;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
+
+/* Dropdown menu options */
 #closet-dropdown-menu button {
   width: 100%;
   text-align: left;
@@ -119,17 +134,14 @@ svg {
   color: white;
 }
 
-#closet-dropdown-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-#closet-tryon-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-#closet-save-btn:hover {
-  filter: brightness(1.1);
-}
+#closet-dropdown-btn:hover,
+#closet-tryon-btn:hover,
 #closet-dropdown-menu button:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+#closet-save-btn:hover {
+  filter: brightness(1.1);
 }
 
 /* Saved state */
