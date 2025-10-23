@@ -830,7 +830,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     );
     if (injected && span && span.textContent !== "Retry Try On") {
       span.textContent = "Retry Try On";
+    } else if (!injected && span && span.textContent !== "Try On") {
+      span.textContent = "Try On";
     }
+
   }
   function extractPatternFromListItem(listItemSelector: string): string {
     const listItemEl = document.querySelector(listItemSelector);
