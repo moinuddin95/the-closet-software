@@ -622,6 +622,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const onDocClick = (ev: MouseEvent) => {
       if (!group.contains(ev.target as Node)) {
         menu.style.display = "none";
+        caretBtn.textContent = "▾";
         caretBtn.setAttribute("aria-expanded", "false");
       }
     };
