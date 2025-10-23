@@ -825,7 +825,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   }
   function updateTryonButtonForRetry() {
     const injected = !!document.querySelector("[data-closet-injected='1']");
-    const span = document.querySelector<HTMLSpanElement>("#closet-tryon-btn > span");
+    const span = document.querySelector<HTMLSpanElement>(
+      "#closet-tryon-btn > span"
+    );
     if (injected && span && span.textContent !== "Retry Try On") {
       span.textContent = "Retry Try On";
     }
@@ -1138,17 +1140,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   }
   function pinMainImage() {
     const pattern = getSitePattern()!;
-    const mainImageEl = document.querySelector<HTMLElement>(
+    const mainImageEls = document.querySelectorAll<HTMLElement>(
       pattern.selectors.mainImage
-    )!;
-    if (mainImageEl) {
-      console.log("running pinMainImage -- this should only be once ");
-      console.log("pinning main image", mainImageEl);
+    );
+    for (const mainImageEl of mainImageEls) {
+      if (mainImageEl.getAttribute("src")?.includes("tvxjbdmsdrccgyccgabz.supabase.co")) continue;
       mainImageEl.dataset.closetMainImage = "1";
-    } else {
-      console.warn(
-        "The Closet: pinMainImage - main image element not found. WTFFF"
-      );
+      console.log("pinning main image", mainImageEl);
+      return;
     }
   }
 
@@ -1204,6 +1203,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       });
 
       const tryonImageObserver = new MutationObserver(async () => {
+        pinMainImage();
         await loadTryonImageIfExists();
         updateTryonButtonForRetry();
       });
