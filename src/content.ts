@@ -551,65 +551,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       .sendMessage({ action: "getuserImageId" })
       .then((resp) => {
         const userImageId = resp?.userImageId;
-        if (!userImageId) {
-          console.log(
-            "The Closet: Try-on dropdown not shown (no user image set)."
-          );
-          return;
+        if (userImageId) {
+          injectTryonCarotButtonIfDoesntExist(group);
+        } else {
+          console.error("The Closet: Try-on dropdown not shown (no user image set).");
         }
-
-        // Create dropdown toggle button
-        const caretBtn = document.createElement("button");
-        caretBtn.type = "button";
-        caretBtn.id = "closet-dropdown-btn";
-        caretBtn.setAttribute("aria-haspopup", "menu");
-        caretBtn.setAttribute("aria-expanded", "false");
-        caretBtn.textContent = "▾";
-
-        // Dropdown menu
-        const menu = document.createElement("div");
-        menu.id = "closet-dropdown-menu";
-        menu.setAttribute("role", "menu");
-
-        const menuItem = document.createElement("button");
-        menuItem.type = "button";
-        menuItem.textContent = "Replace Image";
-        menuItem.setAttribute("role", "menuitem");
-        menuItem.addEventListener("mouseover", () => {
-          menuItem.style.background = "rgba(0, 0, 0, 0.05)";
-        });
-        menuItem.addEventListener("mouseout", () => {
-          menuItem.style.background = "transparent";
-        });
-        menuItem.addEventListener("click", () => {
-          // Close menu first
-          menu.style.display = "none";
-          caretBtn.setAttribute("aria-expanded", "false");
-          // Defer the call to a future-implemented handler to avoid TS errors
-          //TODO: implement handleReplaceUserImage in globalThis
-        });
-
-        menu.appendChild(menuItem);
-        group.appendChild(caretBtn);
-        group.appendChild(menu);
-
-        // Toggle menu on caret click
-        caretBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          const open = menu.style.display !== "none";
-          menu.style.display = open ? "none" : "block";
-          caretBtn.textContent = open ? "▾" : "▴";
-          caretBtn.setAttribute("aria-expanded", open ? "false" : "true");
-        });
-
-        // Close on outside click
-        const onDocClick = (ev: MouseEvent) => {
-          if (!group.contains(ev.target as Node)) {
-            menu.style.display = "none";
-            caretBtn.setAttribute("aria-expanded", "false");
-          }
-        };
-        document.addEventListener("click", onDocClick);
       })
       .catch((e) => {
         console.warn(
@@ -620,6 +566,67 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: Try on button injected successfully");
   }
+  const injectTryonCarotButtonIfDoesntExist = (group?: HTMLElement) => {
+    if (document.getElementById("closet-dropdown-btn")) {
+      return;
+    }
+    if (!group) {
+      group = document.getElementById("closet-tryon-group") as HTMLElement;
+    }
+    // Create dropdown toggle button
+    const caretBtn = document.createElement("button");
+    caretBtn.type = "button";
+    caretBtn.id = "closet-dropdown-btn";
+    caretBtn.setAttribute("aria-haspopup", "menu");
+    caretBtn.setAttribute("aria-expanded", "false");
+    caretBtn.textContent = "▾";
+
+    // Dropdown menu
+    const menu = document.createElement("div");
+    menu.id = "closet-dropdown-menu";
+    menu.style.display = "none";
+    menu.setAttribute("role", "menu");
+
+    const menuItem = document.createElement("button");
+    menuItem.type = "button";
+    menuItem.textContent = "Replace Image";
+    menuItem.setAttribute("role", "menuitem");
+    menuItem.addEventListener("mouseover", () => {
+      menuItem.style.background = "rgba(0, 0, 0, 0.05)";
+    });
+    menuItem.addEventListener("mouseout", () => {
+      menuItem.style.background = "transparent";
+    });
+    menuItem.addEventListener("click", () => {
+      // Close menu first
+      menu.style.display = "none";
+      caretBtn.setAttribute("aria-expanded", "false");
+      // Defer the call to a future-implemented handler to avoid TS errors
+      //TODO: implement handleReplaceUserImage in globalThis
+    });
+
+    menu.appendChild(menuItem);
+    group.appendChild(caretBtn);
+    group.appendChild(menu);
+
+    // Toggle menu on caret click
+    caretBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const open = menu.style.display !== "none";
+      menu.style.display = open ? "none" : "block";
+      caretBtn.textContent = open ? "▾" : "▴";
+      caretBtn.setAttribute("aria-expanded", open ? "false" : "true");
+    });
+
+    // Close on outside click
+    const onDocClick = (ev: MouseEvent) => {
+      if (!group.contains(ev.target as Node)) {
+        menu.style.display = "none";
+        caretBtn.setAttribute("aria-expanded", "false");
+      }
+    };
+    document.addEventListener("click", onDocClick);
+  };
   /**
    * Helper: show a top-center toast (auto-dismiss)
    * @param message
@@ -815,8 +822,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     // Append to the thumbnail list
     listEl.insertBefore(node, listEl.firstChild);
 
-    const tryonSpan =
-      document.querySelector<HTMLButtonElement>("#closet-tryon-btn > span");
+    const tryonSpan = document.querySelector<HTMLButtonElement>(
+      "#closet-tryon-btn > span"
+    );
     if (tryonSpan) tryonSpan.textContent = "Try On Again";
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
@@ -947,11 +955,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    */
   async function handleTryonClick(event: Event) {
     event.preventDefault();
-    const tryonButton = document.querySelector<HTMLButtonElement>(
-      "#closet-tryon-btn"
-    );
-  const originalHTML = tryonButton?.innerHTML;
-  let animTimer: ReturnType<typeof setInterval> | null = null;
+    const tryonButton =
+      document.querySelector<HTMLButtonElement>("#closet-tryon-btn");
+    const originalHTML = tryonButton?.innerHTML;
+    let animTimer: ReturnType<typeof setInterval> | null = null;
 
     // Start a simple "Trying..." dots animation on the button textContent
     const startTryingAnimation = () => {
@@ -962,12 +969,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         tryonButton.textContent = `Trying${".".repeat(dots)}`;
       };
       tick();
-  animTimer = globalThis.setInterval(tick, 400);
+      animTimer = globalThis.setInterval(tick, 400);
     };
 
     const stopTryingAnimation = () => {
       if (animTimer !== null) {
-  globalThis.clearInterval(animTimer);
+        globalThis.clearInterval(animTimer);
         animTimer = null;
       }
       if (tryonButton && originalHTML != null) {
@@ -995,6 +1002,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         } finally {
           // Ensure animation stops regardless of success or failure
           stopTryingAnimation();
+          injectTryonCarotButtonIfDoesntExist();
         }
       } else {
         // No user image yet; inject upload popup
@@ -1003,8 +1011,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     } catch (e) {
       console.error("The Closet: handleTryonClick error:", e);
     } finally {
-      // Safety: stop animation if still running (e.g., unexpected paths)
-      stopTryingAnimation();
       tryonButton?.removeAttribute("disabled");
     }
   }
