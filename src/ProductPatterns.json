@@ -28,14 +28,14 @@
   "hm": {
     "urlPattern": "/\\/productpage\\./",
     "selectors": {
-      "titleSelector": "h1.ProductName-module--productTitle, h1[class*=\"product-item-headline\"], h1.a52e1b.a47b6d.a7adae",
-      "insertTarget": ".ProductName-module--container, .product-detail-info, div.a116f4.eabbd3",
+      "titleSelector": "main h1",
+      "insertTarget": "",
       "mainImage": "ul[data-testid=\"grid-gallery\"] img",
-      "priceSelector": "span[itemprop=\"price\"], div.a116f4.eabbd3",
+      "priceSelector": "span[translate=\"no\"]",
       "thumbnailList": "ul[data-testid=\"grid-gallery\"]",
       "thumbnailItem": "ul[data-testid=\"grid-gallery\"] > li"
     },
-    "injectTemplate": "<li data-testid=\"grid-image-injected_{{timestamp}}_{{index}}\"><button type=\"button\" class=\"e8e3eb\" aria-label=\"View larger image: Product image {{posInSet}}\" title=\"View larger image: Product image {{posInSet}}\"><div class=\"fea697 b519aa d937bd f07ab8\" data-testid=\"next-image\"><span style=\"box-sizing:border-box;display:block;overflow:hidden;width:initial;height:initial;background:none;opacity:1;border:0;margin:0;padding:0;position:absolute;top:0;left:0;bottom:0;right:0\"><img alt=\"View larger image: Product image {{posInSet}}\" src=\"{{imageUrl}}\" decoding=\"async\" data-nimg=\"fill\" style=\"position:absolute;top:0;left:0;bottom:0;right:0;box-sizing:border-box;padding:0;border:none;margin:auto;display:block;width:0;height:0;min-width:100%;max-width:100%;min-height:100%;max-height:100%\" sizes=\"(max-width: 768px) 94vw, 50vw\" srcset=\"{{imageUrl}} 256w, {{imageUrl}} 384w, {{imageUrl}} 768w, {{imageUrl}} 1536w, {{imageUrl}} 2160w\"></span></div></button></li>"
+    "injectTemplate": ""
   },
   "oldnavy": {
     "urlPattern": "/\\/browse\\/product\\.do/",

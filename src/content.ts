@@ -1,3 +1,5 @@
+import { title } from "process";
+
 interface ProductPatternJSON {
   urlPattern: string;
   mouseOverTransition?: boolean;
@@ -450,9 +452,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const pattern = getSitePattern();
     if (!pattern) return;
 
-    const targetElement = document.querySelector(
-      pattern.selectors.insertTarget
-    );
+    const targetElement = pattern.selectors.insertTarget
+      ? document.querySelector(pattern.selectors.insertTarget)
+      : document.querySelector(pattern.selectors.titleSelector)?.parentElement;
 
     if (!targetElement?.parentNode) {
       console.log(
@@ -554,7 +556,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         if (userImageId) {
           injectTryonCarotButtonIfDoesntExist(group);
         } else {
-          console.error("The Closet: Try-on dropdown not shown (no user image set).");
+          console.error(
+            "The Closet: Try-on dropdown not shown (no user image set)."
+          );
         }
       })
       .catch((e) => {
@@ -707,7 +711,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       return false;
     }
 
-    const template = pattern.injectTemplate;
+    const template =
+      pattern.injectTemplate === ""
+        ? extractPatternFromListItem(pattern.selectors.thumbnailItem)
+        : pattern.injectTemplate;
     const listSelector = pattern.selectors.thumbnailList;
     if (!template || !listSelector) {
       // No injection template or no list container selector set for this site
@@ -829,6 +836,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (tryonSpan) tryonSpan.textContent = "Try On Again";
     console.log("The Closet: Injected try-on image into thumbnail list.");
     return true;
+  }
+  function extractPatternFromListItem(listItemSelector: string): string {
+    const listItemEl = document.querySelector(listItemSelector);
+    if (!listItemEl) {
+      return "";
+    }
+    let template = listItemEl.outerHTML;
+    // replace src or href attributes with {{imageUrl}}
+    const imgSrcPattern = /(src|href)=["']([^"']+)["']/gi;
+    template = template.replaceAll(imgSrcPattern, '$1="{{imageUrl}}"');
+    // remove srcset attributes if any
+    const srcsetPattern = /\s+srcset\s*=\s*["'][^"']*["']/gi;
+    template = template.replaceAll(srcsetPattern, "");
+    return template;
   }
   /**
    * Injects the popup in container `#closet-tryon-popup-root`.
