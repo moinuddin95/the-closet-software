@@ -47,5 +47,17 @@
       "thumbnailItem": "div.pdp-photo-brick-image[data-testid='pdp-photo-brick-image']"
     },
     "injectTemplate": "<div class=\"pdp-photo-brick-image\" data-testid=\"pdp-photo-brick-image\" data-imageurl=\"{{imageUrl}}\" role=\"button\" tabindex=\"0\"><img alt=\"Product image {{posInSet}}\" sizes=\"(max-width: 569px) 50vw, 100vw\" src=\"{{imageUrl}}\" srcset=\"{{imageUrl}} 202w, {{imageUrl}} 240w, {{imageUrl}} 260w, {{imageUrl}} 520w\" fetchpriority=\"high\" style=\"object-fit:cover;width:100%;height:100%;transform:translateZ(0);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;image-rendering:-webkit-optimize-contrast;backface-visibility:hidden\"></div>"
+  },
+  "gap": {
+    "urlPattern": "/\\/browse\\/product\\.do/",
+    "selectors": {
+      "titleSelector": "#buy-box-wrapper-id > div.pdp-margin-bottom-components.hidden.sm\\:block > h1",
+      "insertTarget": "#buy-box-wrapper-id > div.pdp-margin-bottom-components.hidden.sm\\:block",
+      "mainImage": "#gallery-wrapper > div.pdp__image-gallery-wrapper.pdp__image-gallery-wrapper--sticky > div > div > img",
+      "priceSelector": "div.title-price > span",
+      "thumbnailList": "#gallery-wrapper > div.pdp__image-gallery-wrapper.pdp__image-gallery-wrapper--sticky > div",
+      "thumbnailItem": "div.pdp-photo-brick-image"
+    },
+    "injectTemplate": ""
   }
 }
