@@ -297,6 +297,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (hostname.includes("hm.com")) return "hm";
     if (hostname.includes("oldnavy")) return "oldnavy";
     if (hostname.includes("gap")) return "gap";
+    if (hostname.includes("garageclothing")) return "garage";
     return "n/a";
   }
   /**
@@ -378,6 +379,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     let imageEl = document.querySelector<HTMLImageElement>(
       'img[data-closet-main-image="1"]'
     )!;
+
+    if (!imageEl) {
+      throw new Error("I CAN'T FIND THE FUCKING IMAGE!!!");
+    }
 
     console.info(
       "main image tag",
@@ -1004,6 +1009,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       if (tryonButton && originalHTML != null) {
         tryonButton.innerHTML = originalHTML;
       }
+      document.querySelector("#closet-dropdown-btn")?.removeAttribute("disabled");
     };
 
     tryonButton?.setAttribute("disabled", "true");

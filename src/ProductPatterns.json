@@ -59,5 +59,17 @@
       "thumbnailItem": "div.pdp-photo-brick-image"
     },
     "injectTemplate": ""
+  },
+  "garage": {
+    "urlPattern": "/\\/p\\//",
+    "selectors": {
+      "titleSelector": "div#product-description-sticky-container > div:nth-child(2) > h1",
+      "insertTarget": "div#product-description-sticky-container > div:nth-child(2)",
+      "mainImage": "div.css-wlquqj.eb7e4gv8 img",
+      "priceSelector": "div#product-description-sticky-container > div:nth-child(2) > div",
+      "thumbnailList": "div.css-wlquqj.eb7e4gv8",
+      "thumbnailItem": "div.css-6zh5v6.eb7e4gv6"
+    },
+    "injectTemplate": ""
   }
 }
