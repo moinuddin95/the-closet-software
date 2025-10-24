@@ -833,7 +833,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     } else if (!injected && span && span.textContent !== "Try On") {
       span.textContent = "Try On";
     }
-
   }
   function extractPatternFromListItem(listItemSelector: string): string {
     const listItemEl = document.querySelector(listItemSelector);
@@ -989,6 +988,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         dots = (dots % 3) + 1;
         tryonButton.textContent = `Trying${".".repeat(dots)}`;
       };
+      document
+        .querySelector("#closet-dropdown-btn")
+        ?.setAttribute("disabled", "true");
       tick();
       animTimer = globalThis.setInterval(tick, 400);
     };
@@ -1016,6 +1018,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           // If a user image is already present, proceed with try-on flow without showing upload UI
           startTryingAnimation();
           await processTryon();
+          showTopToast(
+            "AI can make mistakes. Please try again if you are not satisfied."
+          );
         } catch (e) {
           console.error("The Closet: processTryon failed:", e);
           // Optional: surface a user message or fallback to upload
@@ -1069,6 +1074,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       }
     } else if (response.limitExceeded) {
       showTopToast("Image unsupported. Please upload a new photo.");
+      throw new Error("Try-on limit exceeded for the user.");
     }
   }
   /**
@@ -1147,7 +1153,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       pattern.selectors.mainImage
     );
     for (const mainImageEl of mainImageEls) {
-      if (mainImageEl.getAttribute("src")?.includes("tvxjbdmsdrccgyccgabz.supabase.co")) continue;
+      if (
+        mainImageEl
+          .getAttribute("src")
+          ?.includes("tvxjbdmsdrccgyccgabz.supabase.co")
+      )
+        continue;
       mainImageEl.dataset.closetMainImage = "1";
       console.log("pinning main image", mainImageEl);
       return;
