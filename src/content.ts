@@ -914,11 +914,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   // Event Handlers
   /**
-   * Checks if userImageId exists by sending a message to the background script.
-   * Message: `{ action: "getuserImageId" }`
-   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
-   * @param event The click event.
-   * @returns {Promise<void>}
+   * Extract the product info through `extractProductInfo()`.  
+   * Sends a message `"saveProduct"` to the background script to save the product.  
+   * Updates the save button UI to reflect loading, success, or error states.
+   * @param event 
    */
   async function handleSaveClick(event: Event) {
     event.preventDefault();
@@ -989,7 +988,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   /**
    * Checks if userImageId exists by sending a message to the background script.
    * Message: `{ action: "getuserImageId" }`
-   * If it exists, call `processTryon()` else call `injectTryonImageUploadPopup()`.
+   * If it exists, call `processTryon()` and `injectTryonCarotButtonIfDoesntExist()` else call `injectTryonImageUploadPopup()`.
    * @param event The click event.
    * @returns {Promise<void>}
    */
@@ -1042,7 +1041,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           startTryingAnimation();
           await processTryon();
           showTopToast(
-            "AI can make mistakes. Please try again if you are not satisfied."
+            "AI can make mistakes. Please try again if you are not satisfied.", "#5988d7ff"
           );
         } catch (e) {
           console.error("The Closet: processTryon failed:", e);
