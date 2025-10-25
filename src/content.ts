@@ -347,46 +347,47 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   // Parsing helpers
   /**
-   * Extracts and parsed product information from the current page.
-   * Resolves relative image URLs to absolute URLs.
-   * Adding
+   * Extracts price from a given text using regex.
+   * @param priceText 
+   * @returns {string} Extracted price or "N/A" if not found.
+   */
+  function extractPrice(priceText: string): string {
+    const text = priceText;
+    const regex = /\$\d+(\.\d{2})?/;
+    const result = regex.exec(text);
+    return result ? result[0] : "N/A";
+  }
+  /**
+   * Extracts and parsed product information from the current page.  
+   * Image URL is extracted from `img[data-closet-main-image="1"]` and it must exist.  
+   * Resolves relative image URLs to absolute URLs.  
    * @returns {ProductInfo | null}
    */
   function extractProductInfo() {
-    const site = getSiteIdentifier();
+    // get the pattern
     const pattern = getSitePattern();
     if (!pattern) return null;
-
+    // query and validate the elements
+    const site = getSiteIdentifier();
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
-    let imageEl = document.querySelector<HTMLImageElement>(
+    const priceEl = document.querySelector(pattern.selectors.priceSelector);
+    const imageEl = document.querySelector<HTMLImageElement>(
       'img[data-closet-main-image="1"]'
     )!;
-
-    if (!imageEl) {
-      throw new Error("I CAN'T FIND THE FUCKING IMAGE!!!");
-    }
-
     console.info(
-      "main image tag",
-      document.querySelector('img[data-closet-main-image="1"]')
+      "FOUND THE IMAGE!!",
+      imageEl
     );
-
     // handle an edge case where imageSrc is relative URL
     const imageSrcResolved = resolveRelativeImageUrl(
       imageEl?.getAttribute("src") || "",
       globalThis.location.href
     );
-
-    const priceEl = document.querySelector(pattern.selectors.priceSelector);
+    
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageSrcResolved,
-      price: (function () {
-        const text = priceEl?.textContent ?? "";
-        const re = /\$\d+(\.\d{2})?/;
-        const m = re.exec(text);
-        return m ? m[0] : "N/A";
-      })(),
+      price: extractPrice(priceEl?.textContent ?? ""),
       url: globalThis.location.href,
       site: site,
       timestamp: new Date().toISOString(),
