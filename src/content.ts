@@ -31,6 +31,16 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     };
     injectTemplate?: string; // HTML snippet to inject a thumbnail/button
   }
+  // Product information schema for saving the product
+  interface ProductInfo {
+    title: string;
+    image: string;
+    price: string;
+    url: string;
+    site: string;
+    timestamp: string;
+  }
+  // Apparel-related keywords for title matching
   const apparelKeywords = [
     // Tops
     "t-shirt",
@@ -224,34 +234,16 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     "sarong",
     "beachwear",
   ];
-  // Product information schema for saving the product
-  interface ProductInfo {
-    title: string;
-    image: string;
-    price: string;
-    url: string;
-    site: string;
-    timestamp: string;
-  }
-  // Helper to convert a pattern string like "/foo/i" into a RegExp
-  function regexFromString(pattern: string): RegExp {
-    // Expect format "/.../flags?"; fall back to whole string if not wrapped
-    if (pattern.startsWith("/") && pattern.lastIndexOf("/") > 0) {
-      const lastSlash = pattern.lastIndexOf("/");
-      const body = pattern.slice(1, lastSlash);
-      const flags = pattern.slice(lastSlash + 1);
-      return new RegExp(body, flags);
-    }
-    return new RegExp(pattern);
-  }
 
   // Will be populated after fetching from background
   let PRODUCT_PATTERNS: Record<string, ProductPattern> = {};
 
   // Pattern-related helper functions
   /**
-   * Initialize the extension.
-   * @returns {void}
+   * Loads product patterns from the background script.
+   * Uses message action `"getProductsPattern"`
+   * @returns {Promise<void>}
+   * @throws Error if the patterns fail to load.
    */
   async function loadPatterns() {
     if (PATTERNS_JSON) return; // already loaded
@@ -281,25 +273,21 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   }
   /**
    * Detects the current e-commerce site based on the window's hostname.
-   *
-   * @returns {string} The detected site identifier: 'amazon', 'ebay', 'walmart', 'target', 'etsy', or 'generic' if none match.
+   * The site identifier is matched against the keys in PRODUCT_PATTERNS.
+   * 
+   * @returns {string} The detected site identifier or "n/a" if not found.
    */
   function getSiteIdentifier() {
     const hostname = globalThis.location.hostname;
-    if (hostname.includes("amazon")) return "amazon";
-    if (hostname.includes("ebay")) return "ebay";
-    if (hostname.includes("walmart")) return "walmart";
-    if (hostname.includes("target")) return "target";
-    if (hostname.includes("etsy")) return "etsy";
-    if (hostname.includes("shopify")) return "shopify";
-    if (hostname.includes("hm.com")) return "hm";
-    if (hostname.includes("oldnavy")) return "oldnavy";
-    if (hostname.includes("gap")) return "gap";
-    if (hostname.includes("garageclothing")) return "garage";
+    for (const site of Object.keys(PRODUCT_PATTERNS)) {
+      if (hostname.includes(site)) {
+        return site;
+      }
+    }
     return "n/a";
   }
   /**
-   * Gets the product pattern for the current site and extension.
+   * Gets the product pattern for the current site.
    * Returns null if no valid pattern is found.
    * @returns {ProductPattern | null}
    */
@@ -310,16 +298,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
 
     const pattern = PRODUCT_PATTERNS[site];
-    if (!pattern) {
-      return null;
-    }
-    if (!pattern.urlPattern.test(globalThis.location.href)) {
+    if (!pattern?.urlPattern.test(globalThis.location.href)) {
       return null;
     }
     return pattern;
   }
   /**
-   * Checks if the current page is a product page.
    * The product page is determined by matching URL patterns and checking for title and image DOM elements.
    * @returns {boolean}
    */
@@ -340,7 +324,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return !!(title && imageList);
   }
   /**
-   * Checks if the current product page is likely an apparel page based on title keywords.
+   * Checks if the current product page title contains apparel-related keywords.
    * @returns {boolean} True if the product title contains apparel-related keywords.
    */
   function isApparelPage() {
@@ -439,6 +423,21 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       }
     }
     return imageSrc;
+  }
+  /**
+   * Converts a string pattern into a RegExp object.
+   * @param pattern The string pattern to convert.
+   * @returns The RegExp object created from the pattern.
+   */
+  function regexFromString(pattern: string): RegExp {
+    // Expect format "/.../flags?"; fall back to whole string if not wrapped
+    if (pattern.startsWith("/") && pattern.lastIndexOf("/") > 0) {
+      const lastSlash = pattern.lastIndexOf("/");
+      const body = pattern.slice(1, lastSlash);
+      const flags = pattern.slice(lastSlash + 1);
+      return new RegExp(body, flags);
+    }
+    return new RegExp(pattern);
   }
 
   // UI Injection functions
