@@ -1,5 +1,3 @@
-import { title } from "process";
-
 interface ProductPatternJSON {
   urlPattern: string;
   mouseOverTransition?: boolean;
@@ -579,9 +577,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     if (document.getElementById("closet-dropdown-btn")) {
       return;
     }
-    if (!group) {
-      group = document.getElementById("closet-tryon-group") as HTMLElement;
-    }
+    group =
+      group ?? (document.getElementById("closet-tryon-group") as HTMLElement);
     // Create dropdown toggle button
     const caretBtn = document.createElement("button");
     caretBtn.type = "button";
@@ -1009,7 +1006,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       if (tryonButton && originalHTML != null) {
         tryonButton.innerHTML = originalHTML;
       }
-      document.querySelector("#closet-dropdown-btn")?.removeAttribute("disabled");
+      document
+        .querySelector("#closet-dropdown-btn")
+        ?.removeAttribute("disabled");
     };
 
     tryonButton?.setAttribute("disabled", "true");
@@ -1129,114 +1128,31 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    * @returns {Promise<void>}
    */
   async function loadTryonImageIfExists() {
-    console.info("The Closet: loadTryonImageIfExists - start");
     const currentProduct = extractProductInfo();
-    if (!currentProduct) {
-      console.warn(
-        "The Closet: loadTryonImageIfExists - failed to extract product info; aborting"
-      );
-      return;
-    }
-    console.info("The Closet: loadTryonImageIfExists - product extracted", {
-      title: currentProduct.title,
-      url: currentProduct.url,
-      image: currentProduct.image,
-    });
 
     try {
-      console.info(
-        "The Closet: loadTryonImageIfExists - sending message to background to check existing try-on image"
-      );
       const response: any = await chrome.runtime.sendMessage({
         action: "getTryonImageIfExists",
         product: currentProduct,
       });
-      console.info(
-        "The Closet: loadTryonImageIfExists - received response from background",
-        response
-      );
 
-      if (response?.success) {
-        console.info(
-          "The Closet: loadTryonImageIfExists - response.success is true"
-        );
-        if (response.signedUrl) {
-          console.info(
-            "The Closet: loadTryonImageIfExists - signedUrl present",
+      const existingInjected = document.querySelector<HTMLElement>(
+        "[data-closet-injected='1']"
+      );
+      if (response?.success && response.signedUrl) {
+        if (existingInjected) {
+          const imageAlreadyLoaded = existingInjected.innerHTML.includes(
             response.signedUrl
           );
-
-          const existingInjected = document.querySelector<HTMLElement>(
-            "[data-closet-injected='1']"
-          );
-          if (existingInjected) {
-            const containsUrl = existingInjected.innerHTML.includes(
-              response.signedUrl
-            );
-            console.info(
-              "The Closet: loadTryonImageIfExists - found existing injected element",
-              { containsUrl }
-            );
-            if (containsUrl) {
-              console.info(
-                "The Closet: loadTryonImageIfExists - existing injected element already contains the signedUrl; nothing to do"
-              );
-              return;
-            } else {
-              console.info(
-                "The Closet: loadTryonImageIfExists - existing injected element does not contain the signedUrl; will replace"
-              );
-              existingInjected.remove();
-              console.info(
-                "The Closet: loadTryonImageIfExists - removed previous injected element"
-              );
-            }
+          if (imageAlreadyLoaded) {
+            return;
           } else {
-            console.info(
-              "The Closet: loadTryonImageIfExists - no existing injected try-on image found; will inject"
-            );
-          }
-
-          const injected = injectTryonImage(response.signedUrl as string);
-          if (injected) {
-            console.info(
-              "The Closet: loadTryonImageIfExists - injectTryonImage succeeded"
-            );
-          } else {
-            console.warn(
-              "The Closet: loadTryonImageIfExists - injectTryonImage returned false (injection unsupported or failed)"
-            );
-          }
-        } else {
-          console.info(
-            "The Closet: loadTryonImageIfExists - response.success true but no signedUrl (no try-on image exists)"
-          );
-          const removed = !!document
-            .querySelector("[data-closet-injected='1']")
-            ?.remove();
-          if (removed) {
-            console.info(
-              "The Closet: loadTryonImageIfExists - removed existing injected try-on image because none found on server"
-            );
-          } else {
-            console.info(
-              "The Closet: loadTryonImageIfExists - no injected element to remove"
-            );
+            existingInjected.remove();
           }
         }
+        injectTryonImage(response.signedUrl as string);
       } else {
-        console.warn(
-          "The Closet: loadTryonImageIfExists - background returned success=false",
-          response
-        );
-        // Defensive cleanup if any injected exists
-        const existing = document.querySelector("[data-closet-injected='1']");
-        if (existing) {
-          existing.remove();
-          console.info(
-            "The Closet: loadTryonImageIfExists - removed injected element after failed response"
-          );
-        }
+        existingInjected?.remove();
       }
     } catch (e) {
       console.error(
