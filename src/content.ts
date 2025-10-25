@@ -1068,6 +1068,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    * Processes the try-on request by extracting product info via `extractProductInfo()`.
    * Sends the product info to the background script for processing.
    * Message: `{ action: "processTryon", product: ProductInfo }`
+   * if successful and a signed URL is returned, calls `injectTryonImage()` to insert the image into the page.  
+   * If the limit is exceeded, shows a toast message to the user.
    * @returns {Promise<void>}
    */
   async function processTryon() {
@@ -1100,11 +1102,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.
-   * Event.detail should contain `{ image: string, mimeType: string }`.
-   * On receiving the event, it sends the image data to the background script for uploading.
-   * Message: `{ action: "uploadImage", image: string, mimeType: string }`
-   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.
+   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.  
+   * Event.detail should contain `{ image: string, mimeType: string }`.  
+   * On receiving the event, it sends the image data to the background script for uploading.  
+   * Message: `{ action: "uploadImage", image: string, mimeType: string }`  
+   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.  
    * @returns {void}
    */
   function setupImageUploadListener() {
@@ -1139,8 +1141,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     });
   }
   /**
-   * Returns a signed URL of an existing try-on image for the current product if it exists.
-   * Calls `injectTryonImage()` to insert the image into the page if found.
+   * Gets the current product info via `extractProductInfo()`.  
+   * Sends a message `"getTryonImageIfExists"` to the background script with the product info.  
+   * If a signed URL is returned, it calls `injectTryonImage()` to insert the image into the page.  
+   * If a try-on image is already injected and matches the signed URL, it does nothing.  
+   * If no image exists, it removes any previously injected try-on images.  
    * @returns {Promise<void>}
    */
   async function loadTryonImageIfExists() {
@@ -1177,6 +1182,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       );
     }
   }
+  /**
+   * Pins the main product image by setting `data-closet-main-image="1"` on the main image element.  
+   * Skips images hosted on "tvxjbdmsdrccgyccgabz.supabase.co" (try-on images).  
+   * @returns {void}
+   */
   function pinMainImage() {
     const pattern = getSitePattern()!;
     const mainImageEls = document.querySelectorAll<HTMLElement>(
