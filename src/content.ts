@@ -443,41 +443,36 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   // UI Injection functions
   /**
-   * Injects the button container with `#closet-btns-container` as a next sibling to the insertTarget element.
-   * @returns {void}
+   * Injects the button container `#closet-btns-container` as a next sibling to the insertTarget element.
+   * @returns {boolean} True if injection succeeded; false otherwise.
    */
   function injectButtonsContainer() {
-    // Check if container already exists
-    if (document.getElementById("closet-btns-container")) {
-      return;
-    }
-
+    // Checks
     const pattern = getSitePattern();
-    if (!pattern) return;
+    if (document.getElementById("closet-btns-container") || !pattern) {
+      return false;
+    }
 
     const targetElement = pattern.selectors.insertTarget
       ? document.querySelector(pattern.selectors.insertTarget)
       : document.querySelector(pattern.selectors.titleSelector)?.parentElement;
-
     if (!targetElement?.parentNode) {
       console.log(
         "The Closet: Could not find target element for button injection"
       );
-      return;
+      return false;
     }
-
     // Create button container
     const buttonContainer = document.createElement("div");
     buttonContainer.id = "closet-btns-container";
     buttonContainer.className = "closet-container";
-
     // Insert button after the target element
     targetElement.parentNode.insertBefore(
       buttonContainer,
       targetElement.nextSibling
     );
-
     console.log("The Closet: button container injected successfully");
+    return true;
   }
   /**
    * Injects a button `#closet-save-btn` into the product page.
@@ -514,9 +509,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     console.log("The Closet: Save button injected successfully");
   }
   /**
-   * Injects a button `#closet-tryon-btn` into the product page.
-   * DOM Location is child to the button container `#closet-btns-container`.
-   * Click event is handled by `handleTryonClick`.
+   * 1. Injects a container `#closet-tryon-group` as a child to the button container `#closet-btns-container`.
+   * 2. Creates the main try-on button `#closet-tryon-btn` inside the container, with a click event handled by `handleTryonClick`.
+   * 3. If userImageId exists, adds a small split-dropdown for extra actions (e.g., Replace Image) through the `injectTryonCarotButtonIfDoesntExist` function.
    * @returns {void}
    */
   function injectTryonButton() {
@@ -573,7 +568,14 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: Try on button injected successfully");
   }
-  const injectTryonCarotButtonIfDoesntExist = (group?: HTMLElement) => {
+  /**
+   * Injects a dropdown caret button `#closet-dropdown-btn` next to the try-on button.
+   * Injects a dropdown menu `#closet-dropdown-menu` with a "Replace Image" option.
+   * Clicking "Replace Image" triggers `injectTryonImageUploadPopup()`.
+   * @param group 
+   * @returns 
+   */
+  function injectTryonCarotButtonIfDoesntExist (group?: HTMLElement) {
     if (document.getElementById("closet-dropdown-btn")) {
       return;
     }
@@ -637,8 +639,9 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   /**
    * Helper: show a top-center toast (auto-dismiss)
    * @param message
+   * @param color Optional background color, default is error red (#ef4444)
    */
-  const showTopToast = (message: string) => {
+  function showTopToast(message: string, color?: string) {
     // Ensure container exists
     let container = document.getElementById(
       "closet-toast-container"
@@ -665,7 +668,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     toast.textContent = message;
     // Style consistent with app's gradient + readable contrast (error tone)
     toast.style.background =
-      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
+      color || "#ef4444";
     toast.style.color = "#ffffff";
     toast.style.padding = "10px 14px";
     toast.style.borderRadius = "8px";
@@ -700,10 +703,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     setTimeout(remove, 3500);
   };
   /**
-   * Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate.
-   * The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}
-   * will be replaced with appropriate values prior to insertion.
-   *
+   * 1. Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate. 
+   * 2. The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}  
+   * will be replaced with appropriate values prior to insertion.  
+   * 3. If mouseOverTransition is enabled in the pattern, hovering over the injected thumbnail will replace all the main product images with the try-on image.  
+   * 4. The tryon image element is marked with `data-closet-injected="1"` to identify injected elements.
    * @param imageUrl The public URL of the generated try-on image.
    * @returns true if injection succeeded; false otherwise.
    */
@@ -826,6 +830,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     listEl.insertBefore(node, listEl.firstChild);
     return true;
   }
+  /**
+   * Updates the try-on button text based on whether a try-on image is currently injected.  
+   * If an injected try-on image exists (`data-closet-injected="1"`), the button text is set to "Retry Try On".  
+   * Otherwise, it is set to "Try On".
+   * @returns {void}
+   */
   function updateTryonButtonForRetry() {
     const injected = !!document.querySelector("[data-closet-injected='1']");
     const span = document.querySelector<HTMLSpanElement>(
@@ -837,6 +847,13 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       span.textContent = "Try On";
     }
   }
+  /**
+   * Extracts the outer HTML of a list item specified by `listItemSelector`.  
+   * Replaces any `src` or `href` attributes in the HTML with the placeholder `{{imageUrl}}`.  
+   * Removes any `srcset` attributes and the attribute `data-closet-main-image="1"`.
+   * @param listItemSelector The CSS selector for the list item to extract.
+   * @returns {string} The modified outer HTML of the list item or an empty string if not found.
+   */
   function extractPatternFromListItem(listItemSelector: string): string {
     const listItemEl = document.querySelector(listItemSelector);
     if (!listItemEl) {
@@ -853,10 +870,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return template;
   }
   /**
-   * Injects the popup in container `#closet-tryon-popup-root`.
-   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.
-   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.
-   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.
+   * Injects the popup in container `#closet-tryon-popup-root`.  
+   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.  
+   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.  
+   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.  
    * @returns {void}
    */
   function injectTryonImageUploadPopup() {
