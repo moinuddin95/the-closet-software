@@ -1,6 +1,6 @@
 interface ProductPatternJSON {
   urlPattern: string;
-  mouseOverTransition?: boolean;
+  mouseOverTransition: boolean;
   selectors: {
     titleSelector: string;
     insertTarget: string;
@@ -19,7 +19,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   // Product page detection patterns for different e-commerce sites
   interface ProductPattern {
     urlPattern: RegExp;
-    mouseOverTransition?: boolean;
+    mouseOverTransition: boolean;
     selectors: {
       titleSelector: string;
       insertTarget: string;
@@ -274,7 +274,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   /**
    * Detects the current e-commerce site based on the window's hostname.
    * The site identifier is matched against the keys in PRODUCT_PATTERNS.
-   * 
+   *
    * @returns {string} The detected site identifier or "n/a" if not found.
    */
   function getSiteIdentifier() {
@@ -348,7 +348,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
   // Parsing helpers
   /**
    * Extracts price from a given text using regex.
-   * @param priceText 
+   * @param priceText
    * @returns {string} Extracted price or "N/A" if not found.
    */
   function extractPrice(priceText: string): string {
@@ -358,15 +358,16 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return result ? result[0] : "N/A";
   }
   /**
-   * Extracts and parsed product information from the current page.  
-   * Image URL is extracted from `img[data-closet-main-image="1"]` and it must exist.  
-   * Resolves relative image URLs to absolute URLs.  
+   * Extracts and parsed product information from the current page.
+   * Image URL is extracted from `img[data-closet-main-image="1"]` and it must exist.
+   * Resolves relative image URLs to absolute URLs.
    * @returns {ProductInfo | null}
    */
   function extractProductInfo() {
     // get the pattern
     const pattern = getSitePattern();
     if (!pattern) return null;
+    if (pattern.mouseOverTransition) restoreOriginalImage(pattern);
     // query and validate the elements
     const site = getSiteIdentifier();
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
@@ -374,16 +375,13 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const imageEl = document.querySelector<HTMLImageElement>(
       'img[data-closet-main-image="1"]'
     )!;
-    console.info(
-      "FOUND THE IMAGE!!",
-      imageEl
-    );
+    console.info("FOUND THE IMAGE!!", imageEl);
     // handle an edge case where imageSrc is relative URL
     const imageSrcResolved = resolveRelativeImageUrl(
       imageEl?.getAttribute("src") || "",
       globalThis.location.href
     );
-    
+
     return {
       title: titleEl ? titleEl.textContent.trim() : "Unknown Product",
       image: imageSrcResolved,
@@ -568,14 +566,40 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
     console.log("The Closet: Try on button injected successfully");
   }
+  function replaceImageToTryon(pattern: ProductPattern, imageUrl: string) {
+    // Only apply if main image isn't already the try-on image
+    const mainImageEls = document.querySelectorAll<HTMLImageElement>(
+      pattern.selectors.mainImage
+    );
+    for (const mainImageEl of mainImageEls) {
+      if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
+        mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
+        mainImageEl.src = imageUrl;
+      }
+    }
+    console.log("The Closet: Try-on image hover - main image replaced.");
+  }
+  function restoreOriginalImage(pattern: ProductPattern) {
+    const mainImageEls = document.querySelectorAll<HTMLImageElement>(
+      pattern.selectors.mainImage
+    );
+    for (const mainImageEl of mainImageEls) {
+      if (mainImageEl) {
+        const original = mainImageEl.dataset.originalSrc || "";
+        if (original) {
+          mainImageEl.src = original;
+        }
+      }
+    }
+  }
   /**
    * Injects a dropdown caret button `#closet-dropdown-btn` next to the try-on button.
    * Injects a dropdown menu `#closet-dropdown-menu` with a "Replace Image" option.
    * Clicking "Replace Image" triggers `injectTryonImageUploadPopup()`.
-   * @param group 
-   * @returns 
+   * @param group
+   * @returns
    */
-  function injectTryonCarotButtonIfDoesntExist (group?: HTMLElement) {
+  function injectTryonCarotButtonIfDoesntExist(group?: HTMLElement) {
     if (document.getElementById("closet-dropdown-btn")) {
       return;
     }
@@ -635,7 +659,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       }
     };
     document.addEventListener("click", onDocClick);
-  };
+  }
   /**
    * Helper: show a top-center toast (auto-dismiss)
    * @param message
@@ -667,8 +691,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     toast.setAttribute("aria-live", "polite");
     toast.textContent = message;
     // Style consistent with app's gradient + readable contrast (error tone)
-    toast.style.background =
-      color || "#ef4444";
+    toast.style.background = color || "#ef4444";
     toast.style.color = "#ffffff";
     toast.style.padding = "10px 14px";
     toast.style.borderRadius = "8px";
@@ -701,12 +724,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       }, 220);
     };
     setTimeout(remove, 3500);
-  };
+  }
   /**
-   * 1. Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate. 
-   * 2. The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}  
-   * will be replaced with appropriate values prior to insertion.  
-   * 3. If mouseOverTransition is enabled in the pattern, hovering over the injected thumbnail will replace all the main product images with the try-on image.  
+   * 1. Builds and injects a try-on image element into the product's thumbnail list using the site's injectTemplate.
+   * 2. The template placeholders like {{imageUrl}}, {{uniqueId}}, {{posInSet}}, {{setSize}}, {{timestamp}}, {{index}}
+   * will be replaced with appropriate values prior to insertion.
+   * 3. If mouseOverTransition is enabled in the pattern, hovering over the injected thumbnail will replace all the main product images with the try-on image.
    * 4. The tryon image element is marked with `data-closet-injected="1"` to identify injected elements.
    * @param imageUrl The public URL of the generated try-on image.
    * @returns true if injection succeeded; false otherwise.
@@ -775,47 +798,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     node.dataset.closetInjected = "1";
 
     if (pattern.mouseOverTransition) {
-      const replaceImageToTryon = () => {
-        // Only apply if main image isn't already the try-on image
-        const mainImageEls = document.querySelectorAll<HTMLImageElement>(
-          pattern.selectors.mainImage
-        );
-        for (const mainImageEl of mainImageEls) {
-          if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
-            mainImageEl.dataset.originalSrc =
-              mainImageEl.getAttribute("src") || "";
-            mainImageEl.src = imageUrl;
-          }
-        }
-        console.log("The Closet: Try-on image hover - main image replaced.");
-      };
-      const restoreOriginalImage = () => {
-        const mainImageEls = document.querySelectorAll<HTMLImageElement>(
-          pattern.selectors.mainImage
-        );
-        for (const mainImageEl of mainImageEls) {
-          if (mainImageEl) {
-            const original = mainImageEl.dataset.originalSrc || "";
-            if (original) {
-              mainImageEl.src = original;
-            }
-          }
-        }
-      };
       // Fallback when some nested elements intercept hover; mouseover bubbles
       node.addEventListener("mouseover", (_ev: Event) => {
         _ev.preventDefault();
-        replaceImageToTryon();
+        replaceImageToTryon(pattern, imageUrl);
       });
       for (const elem of listEl.querySelectorAll(
         pattern.selectors.thumbnailItem
       )) {
         elem.addEventListener("mouseover", (_ev: Event) => {
           _ev.preventDefault();
-          restoreOriginalImage();
+          restoreOriginalImage(pattern);
         });
       }
-      replaceImageToTryon();
+      replaceImageToTryon(pattern, imageUrl);
     }
 
     // Remove any existing injected try-on images to avoid duplicates
@@ -831,8 +827,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return true;
   }
   /**
-   * Updates the try-on button text based on whether a try-on image is currently injected.  
-   * If an injected try-on image exists (`data-closet-injected="1"`), the button text is set to "Retry Try On".  
+   * Updates the try-on button text based on whether a try-on image is currently injected.
+   * If an injected try-on image exists (`data-closet-injected="1"`), the button text is set to "Retry Try On".
    * Otherwise, it is set to "Try On".
    * @returns {void}
    */
@@ -848,8 +844,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Extracts the outer HTML of a list item specified by `listItemSelector`.  
-   * Replaces any `src` or `href` attributes in the HTML with the placeholder `{{imageUrl}}`.  
+   * Extracts the outer HTML of a list item specified by `listItemSelector`.
+   * Replaces any `src` or `href` attributes in the HTML with the placeholder `{{imageUrl}}`.
    * Removes any `srcset` attributes and the attribute `data-closet-main-image="1"`.
    * @param listItemSelector The CSS selector for the list item to extract.
    * @returns {string} The modified outer HTML of the list item or an empty string if not found.
@@ -870,10 +866,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     return template;
   }
   /**
-   * Injects the popup in container `#closet-tryon-popup-root`.  
-   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.  
-   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.  
-   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.  
+   * Injects the popup in container `#closet-tryon-popup-root`.
+   * Injects CSS from `"src/tryonImageUploadPopup.css"` with attribute `data-closet-tryon-css="1"`.
+   * Injects module script from `"src/tryonImageUploadPopup.js"` with attribute `data-closet-tryon="1"`.
+   * Sets up listener for image upload events from the popup by calling `setupImageUploadListener()`.
    * @returns {void}
    */
   function injectTryonImageUploadPopup() {
@@ -914,10 +910,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   // Event Handlers
   /**
-   * Extract the product info through `extractProductInfo()`.  
-   * Sends a message `"saveProduct"` to the background script to save the product.  
+   * Extract the product info through `extractProductInfo()`.
+   * Sends a message `"saveProduct"` to the background script to save the product.
    * Updates the save button UI to reflect loading, success, or error states.
-   * @param event 
+   * @param event
    */
   async function handleSaveClick(event: Event) {
     event.preventDefault();
@@ -1041,7 +1037,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           startTryingAnimation();
           await processTryon();
           showTopToast(
-            "AI can make mistakes. Please try again if you are not satisfied.", "#5988d7ff"
+            "AI can make mistakes. Please try again if you are not satisfied.",
+            "#5988d7ff"
           );
         } catch (e) {
           console.error("The Closet: processTryon failed:", e);
@@ -1068,7 +1065,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    * Processes the try-on request by extracting product info via `extractProductInfo()`.
    * Sends the product info to the background script for processing.
    * Message: `{ action: "processTryon", product: ProductInfo }`
-   * if successful and a signed URL is returned, calls `injectTryonImage()` to insert the image into the page.  
+   * if successful and a signed URL is returned, calls `injectTryonImage()` to insert the image into the page.
    * If the limit is exceeded, shows a toast message to the user.
    * @returns {Promise<void>}
    */
@@ -1102,11 +1099,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.  
-   * Event.detail should contain `{ image: string, mimeType: string }`.  
-   * On receiving the event, it sends the image data to the background script for uploading.  
-   * Message: `{ action: "uploadImage", image: string, mimeType: string }`  
-   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.  
+   * Sets up a listener for `"closet-upload-image"`, an event dispatched from the popup.
+   * Event.detail should contain `{ image: string, mimeType: string }`.
+   * On receiving the event, it sends the image data to the background script for uploading.
+   * Message: `{ action: "uploadImage", image: string, mimeType: string }`
+   * After upload, it dispatches a `"closet-upload-response"` event back to the popup with the result.
    * @returns {void}
    */
   function setupImageUploadListener() {
@@ -1141,11 +1138,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     });
   }
   /**
-   * Gets the current product info via `extractProductInfo()`.  
-   * Sends a message `"getTryonImageIfExists"` to the background script with the product info.  
-   * If a signed URL is returned, it calls `injectTryonImage()` to insert the image into the page.  
-   * If a try-on image is already injected and matches the signed URL, it does nothing.  
-   * If no image exists, it removes any previously injected try-on images.  
+   * Gets the current product info via `extractProductInfo()`.
+   * Sends a message `"getTryonImageIfExists"` to the background script with the product info.
+   * If a signed URL is returned, it calls `injectTryonImage()` to insert the image into the page.
+   * If a try-on image is already injected and matches the signed URL, it does nothing.
+   * If no image exists, it removes any previously injected try-on images.
    * @returns {Promise<void>}
    */
   async function loadTryonImageIfExists() {
@@ -1166,13 +1163,19 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
             response.signedUrl
           );
           if (imageAlreadyLoaded) {
+            console.log("image already loaded, skipping injection");
             return;
           } else {
+            console.log("Removing previously injected try-on image.");
+            restoreOriginalImage(getSitePattern()!);
             existingInjected.remove();
           }
         }
+        console.log("Injecting existing try-on image from storage.");
         injectTryonImage(response.signedUrl as string);
       } else {
+        console.log("No existing try-on image found, removing if any.");
+        restoreOriginalImage(getSitePattern()!);
         existingInjected?.remove();
       }
     } catch (e) {
@@ -1183,8 +1186,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
   }
   /**
-   * Pins the main product image by setting `data-closet-main-image="1"` on the main image element.  
-   * Skips images hosted on "tvxjbdmsdrccgyccgabz.supabase.co" (try-on images).  
+   * Pins the main product image by setting `data-closet-main-image="1"` on the main image element.
+   * Skips images hosted on "tvxjbdmsdrccgyccgabz.supabase.co" (try-on images).
    * @returns {void}
    */
   function pinMainImage() {
@@ -1207,7 +1210,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
 
   /**
    * Main initialization function.
-   * Loads product patterns, checks if on a product page, and injects UI elements accordingly.
+   * Loads product patterns, checks if on a product page, injects and updates UI elements accordingly.
    * @returns {Promise<void>}
    */
   async function init() {
