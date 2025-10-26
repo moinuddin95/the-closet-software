@@ -9,13 +9,20 @@ export function TryonImageUploadPopup() {
     type: "success" | "error" | null;
     message: string;
   }>({ type: null, message: "" });
-
-  const onClose = () => {
+  /**
+   * Closes the popup by hiding its root element.
+   * This will reset the selected file and upload status.
+   */
+  function onClose() {
     document.getElementById("closet-tryon-popup-root")!.style.display = "none";
     setSelectedFile(null);
     setUploadStatus({ type: null, message: "" });
-  };
-
+  }
+  /** 
+   * Handles the upload button click event.
+   * Reads the selected file and sends it to the content script via a custom DOM event `closet-upload-image`.
+   * Listens for a response event `closet-upload-response` to update the upload status.
+   */
   function handleUploadClick() {
     // Send the selected file to the background script
     if (!selectedFile) {
@@ -77,7 +84,7 @@ export function TryonImageUploadPopup() {
 
     reader.readAsDataURL(selectedFile);
   }
-
+  /** Handles file input change event to set the selected file. */
   function handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -163,7 +170,7 @@ export function TryonImageUploadPopup() {
     </div>
   );
 }
-
+// Render the popup into the designated container
 const container = document.getElementById("closet-tryon-popup-root");
 if (container) {
   render(<TryonImageUploadPopup />, container);
