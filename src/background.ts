@@ -154,7 +154,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Handle saving a product
+// Save Product Feature Handlers
+/**
+ * Handles saving a product to the user's saved products list in Chrome storage `savedProducts`.
+ * @param product The product information to save.
+ * @returns A promise that resolves to the result of the save operation.
+ */
 async function handleSaveProduct(product: ProductInfo) {
   try {
     const result = await chrome.storage.local.get(["savedProducts"]);
@@ -179,8 +184,11 @@ async function handleSaveProduct(product: ProductInfo) {
     return { success: false, error: error.message };
   }
 }
-
-// Handle removing a product
+/**
+ * Handles removing a product from the user's saved products list in Chrome storage `savedProducts`.
+ * @param product The product information to remove.
+ * @returns A promise that resolves to the result of the remove operation.
+ */
 async function handleRemoveProduct(product: ProductInfo) {
   try {
     const result = await chrome.storage.local.get(["savedProducts"]);
@@ -195,8 +203,10 @@ async function handleRemoveProduct(product: ProductInfo) {
     return { success: false, error: error.message };
   }
 }
-
-// Handle clearing all products
+/**
+ * Handles clearing all products from the user's saved products list in Chrome storage `savedProducts`.
+ * @returns A promise that resolves to the result of the clear operation.
+ */
 async function clearAllProducts() {
   try {
     await chrome.storage.local.set({ savedProducts: [] });
@@ -206,8 +216,12 @@ async function clearAllProducts() {
     return { success: false, error: error.message };
   }
 }
-
-// Handle image upload
+/**
+ * Handles uploading an image to the user's storage.
+ * @param imageData The base64-encoded image data.
+ * @param mimeType The MIME type of the image (e.g., "image/png").
+ * @returns A promise that resolves to the result of the upload operation.
+ */
 async function handleImageUpload(imageData: string, mimeType: string) {
   try {
     if (!imageData || !mimeType) {
@@ -296,6 +310,12 @@ async function handleImageUpload(imageData: string, mimeType: string) {
   }
 }
 
+// Try-On Feature Handlers
+/**
+ * Processes the virtual try-on for a clothing product by invoking the edge function `tryon`.
+ * @param product The clothing product information.
+ * @returns A promise that resolves to the result of the try-on process.
+ */
 async function processTryon(product: ProductInfo) {
   // store the product in the clothing_items table
   const { clothing_id, error } = await saveOrFetchTryonProduct(product);
@@ -316,7 +336,11 @@ async function processTryon(product: ProductInfo) {
     throw new Error(`Try-on function invocation failed: ${error}`);
   }
 }
-
+/**
+ * Saves or fetches a try-on product for the user.
+ * @param product The clothing product information.
+ * @returns The clothing item ID or an error message.
+ */
 async function saveOrFetchTryonProduct(product: ProductInfo) {
   // get the userId from storage
   const { userId } = await chrome.storage.local.get(["userId"]);
