@@ -1,3 +1,6 @@
+/**
+ * An adaptor for Chrome's storage API to provide a simple key-value storage interface.
+ */
 export const chromeStorageAdapter = {
   async getItem(key: any) {
     return new Promise((resolve) => {

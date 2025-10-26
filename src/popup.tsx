@@ -1,7 +1,7 @@
 import { useState, useEffect } from "preact/hooks";
 import './popup.css';
 
-interface Product {
+interface ProductInfo {
   title: string;
   price: string;
   site: string;
@@ -10,10 +10,15 @@ interface Product {
 }
 
 export function Popup() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductInfo[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Load products when popup opens
+  
+  // Effect hooks
+  /** 
+   * Load products from storage on mount
+   * This will fetch the saved products and update the state.
+   * It fetches data via a `getProducts` message to the background script.
+   */
   useEffect(() => {
     (async () => {
       try {
@@ -27,7 +32,11 @@ export function Popup() {
     })();
   }, []);
 
-  // Listen for storage updates (e.g., from other tabs)
+  /**
+   * Listen for storage changes to update the product list in real-time
+   * This ensures that if products are added/removed from other parts of the extension,
+   * the popup reflects those changes immediately.
+   */
   useEffect(() => {
     const handleChange = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -41,31 +50,47 @@ export function Popup() {
     return () => chrome.storage.onChanged.removeListener(handleChange);
   }, []);
 
+  // Action handlers
+  /**
+   * Remove a product from the list
+   * This will send a `removeProduct` message to the background script to handle the removal.
+   * if unsuccessful, it alerts the user.
+   * @param index The index of the product to remove
+   */
   async function removeProduct(index: number) {
     const { success } = await chrome.runtime.sendMessage({ action: "removeProduct", product: products[index] });
     if (!success) {
       alert("Failed to remove product. Please try again.");
     }
   }
-
+  /**
+   * Clear all saved products
+   * This will send a `clearAll` message to the background script to clear all products.
+   * It prompts the user for confirmation before proceeding.
+   */
   async function clearAll() {
     if (!confirm("Are you sure you want to remove all saved products?")) return;
     await chrome.runtime.sendMessage({ action: "clearAll" });
   }
-
+  /**
+   * Open a product URL in a new tab
+   * @param url The URL of the product to open
+   */
   function openProduct(url: string) {
     chrome.tabs.create({ url });
   }
-
-  // Small helper to prevent XSS
+  /**
+   * Escape HTML to prevent XSS
+   * @param text The text to escape
+   * @returns The escaped HTML string
+   */
   function escapeHtml(text: string) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
 
-  // --- UI rendering ---
-
+  // UI rendering
   if (loading) {
     return (
       <div class="popup-container">
