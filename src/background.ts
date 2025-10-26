@@ -26,7 +26,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   }
 });
 
-// Listen for messages from content scripts
+// Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   //Messages for save functionality
   if (request.action === "saveProduct") {
