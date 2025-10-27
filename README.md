@@ -13,9 +13,9 @@ A web extension that enables seamless virtual try-on of clothing items on variou
 
 ## 🎥 Demo
 
-[![Watch the demo](assets/demo/demo-thumb.jpg)](https://youtu.be/vtxYQ-ta5XI)
+![Demo GIF](assets/demo/demo-gif.gif)
 
-- Click to watch a short walkthrough of virtual try‑on.
+Watch the walkthrough on YouTube: https://youtu.be/vtxYQ-ta5XI
 
 ## 🧠 Tech Stack
 
