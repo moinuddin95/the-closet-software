@@ -576,7 +576,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
         mainImageEl.src = imageUrl;
         mainImageEl.srcset = ""; // clear srcset to avoid overrides
-        mainImageEl.dataset.originalSrcset = mainImageEl.getAttribute("srcset") || "";
+        mainImageEl.dataset.originalSrcset =
+          mainImageEl.getAttribute("srcset") || "";
       }
     }
     console.log("The Closet: Try-on image hover - main image replaced.");
@@ -803,8 +804,21 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
-    if (pattern.mouseOverTransition) {
+
+    if (
+      pattern.mouseOverTransition &&
+      document.querySelector(pattern.selectors.mainImage)?.outerHTML !==
+        document.querySelector(pattern.selectors.thumbnailItem)?.querySelector("img")?.outerHTML
+    ) {
       // Fallback when some nested elements intercept hover; mouseover bubbles
+      //TODO: TESING CODE
+      console.log("items");
+      console.log(
+        "main image",
+        document.querySelector(pattern.selectors.mainImage)?.outerHTML
+      );
+      console.log("items end");
+
       node.addEventListener("mouseover", (_ev: Event) => {
         _ev.preventDefault();
         replaceImageToTryon(pattern, imageUrl);
