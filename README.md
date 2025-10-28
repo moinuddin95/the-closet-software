@@ -36,6 +36,12 @@ npm install
 npm run build
 ```
 
+Load the unpacked extension in Chrome:
+
+1. Open Chrome and navigate to `chrome://extensions`.
+2. Enable "Developer mode" using the toggle in the top right corner.
+3. Click "Load unpacked" and select the `dist` directory of your project.
+
 ## 📁 Project structure
 
 At a glance
@@ -47,8 +53,8 @@ the-closet-software/
 ├─ tsconfig.json                # TypeScript compiler options
 ├─ vite.config.ts               # Vite bundling config for the extension
 ├─ README.md                    # Project overview and docs
-├─ LICENSE                      # License file
 ├─ icons/                       # Extension icon assets (16/48/128)
+├─ assets/                      # Documentation images and demo gifs
 └─ src/
 	├─ content.ts               # Content script: detects product pages, injects UI (Save/Try On), DOM logic
 	├─ background.ts            # Background service worker: handles runtime messages and backend operations
@@ -65,7 +71,7 @@ the-closet-software/
 
 ## 🧩 Background (service worker)
 
-The background script (`src/background.ts`) runs as a Manifest V3 service worker and acts as the backend coordinator for the extension. It handles messaging from the content script and popup, talks to Supabase, and manages Chrome storage.
+The background script (`src/background.ts`) runs as a Manifest V3 service worker and acts as the backend coordinator for the extension. It handles messages from the content script and popup, talks to Supabase, and manages Chrome storage.
 
 ### Responsibilities
 
@@ -84,7 +90,6 @@ The background script (`src/background.ts`) runs as a Manifest V3 service worker
 - Try-on flow:
   - `processTryon`: ensures a clothing item exists (`clothing_items`), then invokes Supabase Edge Function `tryon` with `clothing_id` and `user_image_id`.
   - `getTryonImageIfExists`: looks up a try-on result in `tryon_results` for the current user, then returns a signed URL from Supabase Storage.
-- Diagnostics: logs storage changes for `savedProducts`.
 
 ### Message actions handled
 
@@ -123,12 +128,12 @@ The content script is injected on product pages and is responsible for page dete
 - Pattern loading: fetches site definitions from the background with `getProductsPattern` and converts each `urlPattern` string into a RegExp.
 - Site detection: matches the current hostname/URL against loaded patterns (`getSiteIdentifier`, `getSitePattern`).
 - Product-page checks: verifies essential elements (title, thumbnail list) exist (`isProductPage`).
-- Apparel heuristic: light keyword-based check on the title to decide if Try On UI should appear (`isApparelPage`).
+- Apparel checks: light keyword-based check on the title to decide if Try On UI should appear (`isApparelPage`).
 - Product extraction: reads title, price, canonicalized image URL, and page URL (`extractProductInfo`, `resolveRelativeImageUrl`, `extractPrice`).
 - UI injection:
-  - Button container: inserts `#closet-btns-container` near the product title/target element (`injectButtonsContainer`).
-  - Save button: adds `#closet-save-btn` (class `.closet-button`) and wires `handleSaveClick`.
-  - Try On split button: adds `#closet-tryon-btn` plus an optional caret dropdown `#closet-dropdown-btn` with a menu (`injectTryonButton`, `injectTryonCarotButtonIfDoesntExist`).
+  - Button container: inserts `#closet-btns-container` near the product title/target element.
+  - Save button: adds `#closet-save-btn` and wires `handleSaveClick`.
+  - Try On split button: adds `#closet-tryon-btn` plus an optional caret dropdown `#closet-dropdown-btn` with a menu to replace user image (`injectTryonButton`, `injectTryonCarotButtonIfDoesntExist`).
 - Try-on image integration:
   - Template-based injection into the thumbnail list via `injectTryonImage` using either `pattern.injectTemplate` or a template inferred from `extractPatternFromListItem`.
   - Optional hover replacement of main images when `mouseOverTransition` is enabled (`replaceImageToTryon`, `restoreOriginalImage`).
@@ -173,3 +178,11 @@ The content script is injected on product pages and is responsible for page dete
 
 - Uses `.closet-button` for shared button styles.
 - The Try On split button uses `#closet-tryon-group`, `#closet-tryon-btn`, `#closet-dropdown-btn`, and `#closet-dropdown-menu` which are styled in `src/styles.css`.
+
+## Manifest integration (`manifest.json`)
+
+- Declared under `manifest.json > content_scripts` to inject `src/content.js` and `src/styles.css` at `document_idle` on `<all_urls>`.
+- The extension requests host permissions for supported retailers; the content script further gates activation using loaded site patterns so it only injects UI on recognized product pages.
+- Web Accessible Resources (`web_accessible_resources`) include `src/*.css` and `src/*.js`.
+- Background service worker is registered as a module (`src/background.js`), enabling message-based coordination used by the content script.
+- The action popup (`src/popup.html`) is declared in the manifest and will be opened by the content script only by click.
