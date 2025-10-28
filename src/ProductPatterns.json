@@ -42,6 +42,7 @@
     "mouseOverTransition": true,
     "selectors": {
       "titleSelector": "h1.pdp-product-title[data-testid='product-title']",
+      "priceSelector": "div.title-price > span",
       "insertTarget": ".pdp-margin-bottom-components, .pdp-title-price-wrapper",
       "mainImage": "img.pdp-photo-brick-image img, div[data-testid='pdp-photo-brick-image'] img, div.pdp_thumbnail-layout__main-media-slide.relative img",
       "thumbnailList": "div.pdp-photo-brick-wrapper, div.pdp_thumbnail-layout__thumbnail-list",

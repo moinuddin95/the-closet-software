@@ -363,7 +363,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    * Resolves relative image URLs to absolute URLs.
    * @returns {ProductInfo | null}
    */
-  function extractProductInfo() {
+  function extractProductInfo(withTryOnImage?: boolean) {
     // get the pattern
     const pattern = getSitePattern();
     if (!pattern) return null;
@@ -373,7 +373,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
     const priceEl = document.querySelector(pattern.selectors.priceSelector);
     const imageEl = document.querySelector<HTMLImageElement>(
-      'img[data-closet-main-image="1"]'
+      (withTryOnImage ? "[data-closet-injected='1'] img, " : "") + 'img[data-closet-main-image="1"]'
     )!;
     console.info("FOUND THE IMAGE!!", imageEl);
     // handle an edge case where imageSrc is relative URL
@@ -952,7 +952,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     `;
 
     try {
-      const productInfo = extractProductInfo();
+      const productInfo = extractProductInfo(true);
       if (!productInfo) throw new Error("Failed to extract product info");
 
       // Save via background script
