@@ -88,7 +88,7 @@ The background script (`src/background.ts`) runs as a Manifest V3 service worker
 - Image upload pipeline:
   - `uploadImage`: reserves a row in `user_images`, decodes image data/URL to bytes, uploads to Supabase Storage (`user_uploads`), updates the DB row, and caches `userImageId` in local storage.
 - Try-on flow:
-  - `processTryon`: ensures a clothing item exists (`clothing_items`), then invokes Supabase Edge Function `tryon` with `clothing_id` and `user_image_id`.
+  - `processTryon`: ensures a clothing item exists (`clothing_items`), then invokes Supabase Edge Function `tryon` with `clothing_id`, `user_image_id` and `product_url`.
   - `getTryonImageIfExists`: looks up a try-on result in `tryon_results` for the current user, then returns a signed URL from Supabase Storage.
 
 ### Message actions handled
@@ -105,7 +105,7 @@ processTryon | getTryonImageIfExists
 
 1. Content script extracts product info on a supported site and sends `processTryon`.
 2. Background ensures a `clothing_items` record exists (insert or fetch on unique image per user).
-3. Background invokes the `tryon` Edge Function with `clothing_id` and `user_image_id` (previously set via `uploadImage`).
+3. Background invokes the `tryon` Edge Function with `clothing_id`, `user_image_id` and `product_url`.
 4. When a result exists, content can request `getTryonImageIfExists` and receive a signed URL to inject back into the page UI.
 
 ### Storage keys used

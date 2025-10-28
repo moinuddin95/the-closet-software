@@ -279,25 +279,11 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
    */
   function getSiteIdentifier() {
     const hostname = globalThis.location.hostname;
-<<<<<<< Updated upstream
     for (const site of Object.keys(PRODUCT_PATTERNS)) {
       if (hostname.includes(site)) {
         return site;
       }
     }
-=======
-    if (hostname.includes("amazon")) return "amazon";
-    if (hostname.includes("ebay")) return "ebay";
-    if (hostname.includes("walmart")) return "walmart";
-    if (hostname.includes("target")) return "target";
-    if (hostname.includes("etsy")) return "etsy";
-    if (hostname.includes("shopify")) return "shopify";
-    if (hostname.includes("hm.com")) return "hm";
-    if (hostname.includes("oldnavy")) return "oldnavy";
-    if (hostname.includes("gap")) return "gap";
-    if (hostname.includes("garageclothing")) return "garage";
-    if (hostname.includes("aritzia")) return "aritzia";
->>>>>>> Stashed changes
     return "n/a";
   }
   /**
@@ -732,7 +718,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       toast.style.transform = "translateY(-8px)";
       setTimeout(() => {
         toast.remove();
-        if (container && container.childElementCount === 0) {
+        if (container?.childElementCount === 0) {
           container.remove();
         }
       }, 220);
