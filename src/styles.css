@@ -149,3 +149,5 @@ svg {
     padding: 8px 16px;
   }
 }
+
+curl -I -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36" -e "https://www.aritzia.com/" "https://assets.aritzia.com/image/upload/c_crop,ar_1920:2623,g_south/q_auto,f_auto,dpr_auto/f25_a04_129086_6046_on_a"

@@ -71,5 +71,17 @@
       "thumbnailItem": "div.css-6zh5v6.eb7e4gv6"
     },
     "injectTemplate": ""
+  },
+  "aritzia": {
+    "urlPattern": "/\\/product\\//",
+    "selectors": {
+      "titleSelector": "h1[data-testid='product-name-text']",
+      "insertTarget": "div[data-componentname='InfoHeader']",
+      "mainImage": "#product-images > a > img",
+      "priceSelector": "[data-testid='product-list-price-text']",
+      "thumbnailList": "#product-images",
+      "thumbnailItem": "#product-images > a"
+    },
+    "injectTemplate": ""
   }
 }

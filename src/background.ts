@@ -326,7 +326,7 @@ async function processTryon(product: ProductInfo) {
   try {
     const userImageId = await chrome.storage.local.get(["userImageId"]);
     const { data, error } = await supabase.functions.invoke("tryon", {
-      body: { clothing_id, user_image_id: userImageId.userImageId },
+      body: { clothing_id, user_image_id: userImageId.userImageId, referer_url: product.url },
     });
     if (error) {
       throw new Error(`Edge function error: ${error.message}`);
