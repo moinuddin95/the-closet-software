@@ -575,6 +575,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
         mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
         mainImageEl.src = imageUrl;
+        mainImageEl.srcset = ""; // clear srcset to avoid overrides
+        mainImageEl.dataset.originalSrcset = mainImageEl.getAttribute("srcset") || "";
       }
     }
     console.log("The Closet: Try-on image hover - main image replaced.");
@@ -585,9 +587,13 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     );
     for (const mainImageEl of mainImageEls) {
       if (mainImageEl) {
-        const original = mainImageEl.dataset.originalSrc || "";
-        if (original) {
-          mainImageEl.src = original;
+        const originalSrc = mainImageEl.dataset.originalSrc || "";
+        const originalSrcset = mainImageEl.dataset.originalSrcset || "";
+        if (originalSrc) {
+          mainImageEl.src = originalSrc;
+        }
+        if (originalSrcset) {
+          mainImageEl.srcset = originalSrcset;
         }
       }
     }
@@ -1202,6 +1208,10 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           ?.includes("tvxjbdmsdrccgyccgabz.supabase.co")
       )
         continue;
+      if (mainImageEl.dataset.closetMainImage === "1") {
+        // already pinned
+        return;
+      }
       mainImageEl.dataset.closetMainImage = "1";
       console.log("pinning main image", mainImageEl);
       return;

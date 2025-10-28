@@ -39,14 +39,15 @@
   },
   "oldnavy": {
     "urlPattern": "/\\/browse\\/product\\.do/",
+    "mouseOverTransition": true,
     "selectors": {
       "titleSelector": "h1.pdp-product-title[data-testid='product-title']",
       "insertTarget": ".pdp-margin-bottom-components, .pdp-title-price-wrapper",
-      "mainImage": "img.pdp-photo-brick-image img, div[data-testid='pdp-photo-brick-image'] img",
-      "thumbnailList": "div.pdp-photo-brick-wrapper[data-testid='pdp-photo-brick-wrapper']",
-      "thumbnailItem": "div.pdp-photo-brick-image[data-testid='pdp-photo-brick-image']"
+      "mainImage": "img.pdp-photo-brick-image img, div[data-testid='pdp-photo-brick-image'] img, div.pdp_thumbnail-layout__main-media-slide.relative img",
+      "thumbnailList": "div.pdp-photo-brick-wrapper, div.pdp_thumbnail-layout__thumbnail-list",
+      "thumbnailItem": "div.pdp-photo-brick-image[data-testid='pdp-photo-brick-image'], div.pdp_thumbnail-layout__thumbnail.relative"
     },
-    "injectTemplate": "<div class=\"pdp-photo-brick-image\" data-testid=\"pdp-photo-brick-image\" data-imageurl=\"{{imageUrl}}\" role=\"button\" tabindex=\"0\"><img alt=\"Product image {{posInSet}}\" sizes=\"(max-width: 569px) 50vw, 100vw\" src=\"{{imageUrl}}\" srcset=\"{{imageUrl}} 202w, {{imageUrl}} 240w, {{imageUrl}} 260w, {{imageUrl}} 520w\" fetchpriority=\"high\" style=\"object-fit:cover;width:100%;height:100%;transform:translateZ(0);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;image-rendering:-webkit-optimize-contrast;backface-visibility:hidden\"></div>"
+    "injectTemplate": ""
   },
   "gap": {
     "urlPattern": "/\\/browse\\/product\\.do/",
