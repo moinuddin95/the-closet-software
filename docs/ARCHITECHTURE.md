@@ -19,10 +19,9 @@
 ![Sequence diagram](./SEQUENCE_DIAGRAMS/INITIALIZATION.png)
 
 
-
 ### Try-on flow
 
 ![Sequence diagram](./SEQUENCE_DIAGRAMS/TRYON.png)
 
 ## Message contract
-(All background <-> content messages, see `/DB_SCHEMA.md` for data schema)
+(All background <-> content messages, see `/BACKGROUND_WORKER.md` for data schema)

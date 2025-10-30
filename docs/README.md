@@ -52,7 +52,7 @@ the-closet-software/
 ├─ package.json                 # Dev dependencies and scripts (build, dev)
 ├─ tsconfig.json                # TypeScript compiler options
 ├─ vite.config.ts               # Vite bundling config for the extension
-├─ README.md                    # Project overview and docs
+├─ docs/                        # Documentation files
 ├─ icons/                       # Extension icon assets (16/48/128)
 ├─ assets/                      # Documentation images and demo gifs
 └─ src/
