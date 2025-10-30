@@ -16,7 +16,8 @@
     "*://*.gapcanada.com/*",
     "*://*.garage.com/*",
     "*://*.aritzia.com/*",
-    "*://*.hm.com/*"
+    "*://*.hm.com/*",
+    "*://*.shein.com/*"
   ],
   "content_scripts": [
     {

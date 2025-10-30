@@ -85,5 +85,19 @@
       "thumbnailItem": "#product-images > a"
     },
     "injectTemplate": ""
+  },
+  "shein": {
+    "urlPattern": "/-p-\\d+\\.html/i",
+    "mouseOverTransition": true,
+    "selectors": {
+      "titleSelector": "h1[class*='product'], h1[class*='title'], h1[data-id='product_title'], .product-intro__head-name, [class*='goods-title']",
+      "insertTarget": "",
+      "mainImage": "div.swiper-item.cursor-zoom-in img.crop-image-container__img",
+      "priceSelector": ".product-intro__head-price, [class*='from__price-'], [class*='sale-price'], .from__sale-price, span[class*='price']:not([class*='origin'])",
+      "thumbnailList": "div.main-picture > div > ul",
+      "thumbnailItem": "div.main-picture > div > ul > li",
+      "videoThumbnail": ""
+    },
+    "injectTemplate": ""
   }
 }

@@ -373,7 +373,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     const titleEl = document.querySelector(pattern.selectors.titleSelector);
     const priceEl = document.querySelector(pattern.selectors.priceSelector);
     const imageEl = document.querySelector<HTMLImageElement>(
-      (withTryOnImage ? "[data-closet-injected='1'] img, " : "") + 'img[data-closet-main-image="1"]'
+      (withTryOnImage ? "[data-closet-injected='1'] img, " : "") +
+        'img[data-closet-main-image="1"]'
     )!;
     console.info("FOUND THE IMAGE!!", imageEl);
     // handle an edge case where imageSrc is relative URL
@@ -573,6 +574,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     );
     for (const mainImageEl of mainImageEls) {
       if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
+        if (mainImageEl.classList.contains("lazyload")) mainImageEl.classList.remove("lazyload");
         mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
         mainImageEl.src = imageUrl;
         mainImageEl.srcset = ""; // clear srcset to avoid overrides
@@ -804,11 +806,12 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     }
     node.dataset.closetInjected = "1";
 
-
     if (
       pattern.mouseOverTransition &&
       document.querySelector(pattern.selectors.mainImage)?.outerHTML !==
-        document.querySelector(pattern.selectors.thumbnailItem)?.querySelector("img")?.outerHTML
+        document
+          .querySelector(pattern.selectors.thumbnailItem)
+          ?.querySelector("img")?.outerHTML
     ) {
       // Fallback when some nested elements intercept hover; mouseover bubbles
       //TODO: TESING CODE
@@ -826,6 +829,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       for (const elem of listEl.querySelectorAll(
         pattern.selectors.thumbnailItem
       )) {
+        
         elem.addEventListener("mouseover", (_ev: Event) => {
           _ev.preventDefault();
           restoreOriginalImage(pattern);
@@ -1190,14 +1194,16 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
             restoreOriginalImage(getSitePattern()!);
             existingInjected.remove();
           }
+        } else {
+          console.log("Injecting existing try-on image from storage.");
+          injectTryonImage(response.signedUrl as string);
         }
-        console.log("Injecting existing try-on image from storage.");
-        injectTryonImage(response.signedUrl as string);
       } else {
         console.log("No existing try-on image found, removing if any.");
         restoreOriginalImage(getSitePattern()!);
         existingInjected?.remove();
       }
+      updateTryonButtonForRetry();
     } catch (e) {
       console.error(
         "The Closet: loadTryonImageIfExists - error while checking/loading try-on image",
@@ -1265,7 +1271,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         if (isApparelPage()) {
           pinMainImage();
           injectTryonButton();
-          updateTryonButtonForRetry();
         }
       };
       await tryOnBtnsInit();
@@ -1287,7 +1292,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         console.log("change detected");
         pinMainImage();
         await loadTryonImageIfExists();
-        updateTryonButtonForRetry();
       });
       const listEl = document.querySelector(
         getSitePattern()?.selectors.thumbnailList!
