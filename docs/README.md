@@ -13,7 +13,7 @@ A web extension that enables seamless virtual try-on of clothing items on variou
 
 ## 🎥 Demo
 
-![Demo GIF](assets/demo/demo-gif.gif)
+![Demo GIF](/assets/demo/demo-gif.gif)
 
 Watch the walkthrough on YouTube: https://youtu.be/vtxYQ-ta5XI
 
