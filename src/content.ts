@@ -574,7 +574,8 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
     );
     for (const mainImageEl of mainImageEls) {
       if (mainImageEl && mainImageEl.getAttribute("src") !== imageUrl) {
-        if (mainImageEl.classList.contains("lazyload")) mainImageEl.classList.remove("lazyload");
+        if (mainImageEl.classList.contains("lazyload"))
+          mainImageEl.classList.remove("lazyload");
         mainImageEl.dataset.originalSrc = mainImageEl.getAttribute("src") || "";
         mainImageEl.src = imageUrl;
         mainImageEl.srcset = ""; // clear srcset to avoid overrides
@@ -829,7 +830,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       for (const elem of listEl.querySelectorAll(
         pattern.selectors.thumbnailItem
       )) {
-        
         elem.addEventListener("mouseover", (_ev: Event) => {
           _ev.preventDefault();
           restoreOriginalImage(pattern);
@@ -1181,27 +1181,42 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       const existingInjected = document.querySelector<HTMLElement>(
         "[data-closet-injected='1']"
       );
-      if (response?.success && response.signedUrl) {
-        if (existingInjected) {
-          const imageAlreadyLoaded = existingInjected.innerHTML.includes(
-            response.signedUrl
-          );
-          if (imageAlreadyLoaded) {
-            console.log("image already loaded, skipping injection");
-            return;
-          } else {
-            console.log("Removing previously injected try-on image.");
-            restoreOriginalImage(getSitePattern()!);
-            existingInjected.remove();
-          }
-        } else {
-          console.log("Injecting existing try-on image from storage.");
-          injectTryonImage(response.signedUrl as string);
-        }
-      } else {
+      // if (response?.success && response.signedUrl) {
+      //   if (existingInjected) {
+      //     const imageAlreadyLoaded = existingInjected.innerHTML.includes(
+      //       response.signedUrl
+      //     );
+      //     if (imageAlreadyLoaded) {
+      //       console.log("image already loaded, skipping injection");
+      //       return;
+      //     } else {
+      //       console.log("Removing previously injected try-on image.");
+      //       restoreOriginalImage(getSitePattern()!);
+      //       existingInjected.remove();
+      //     }
+      //   } else {
+      //     console.log("Injecting existing try-on image from storage.");
+      //     injectTryonImage(response.signedUrl as string);
+      //   }
+      // } else {
+      //   console.log("No existing try-on image found, removing if any.");
+      //   restoreOriginalImage(getSitePattern()!);
+      //   existingInjected?.remove();
+      // }
+      if (!response?.success && !response.signedUrl) {
         console.log("No existing try-on image found, removing if any.");
         restoreOriginalImage(getSitePattern()!);
         existingInjected?.remove();
+      } else if (!existingInjected) {
+        console.log("Injecting existing try-on image from storage.");
+        injectTryonImage(response.signedUrl as string);
+      } else {
+        const imageAlreadyLoaded = existingInjected.innerHTML.includes(
+          response.signedUrl
+        );
+        if (imageAlreadyLoaded) return;
+        restoreOriginalImage(getSitePattern()!);
+        existingInjected.remove();
       }
       updateTryonButtonForRetry();
     } catch (e) {
