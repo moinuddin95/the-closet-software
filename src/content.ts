@@ -762,6 +762,20 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       return false;
     }
 
+    // Check if already injected
+    const existingInjected = listEl.querySelectorAll(
+      '[data-closet-injected="1"]'
+    );
+    if (existingInjected.length > 0 && existingInjected[0].querySelector("img")?.getAttribute("src") === imageUrl) {
+      console.log("The Closet: Try-on image already injected.");
+      return true;
+    }
+    
+    // Remove any existing injected try-on images to avoid duplicates
+    for (const el of existingInjected) {
+      el.remove();
+    }
+
     // Determine current count to compute posInSet/setSize and index
     let existingCount = 0;
     if (pattern.selectors.thumbnailItem) {
@@ -814,15 +828,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
           .querySelector(pattern.selectors.thumbnailItem)
           ?.querySelector("img")?.outerHTML
     ) {
-      // Fallback when some nested elements intercept hover; mouseover bubbles
-      //TODO: TESING CODE
-      console.log("items");
-      console.log(
-        "main image",
-        document.querySelector(pattern.selectors.mainImage)?.outerHTML
-      );
-      console.log("items end");
-
       node.addEventListener("mouseover", (_ev: Event) => {
         _ev.preventDefault();
         replaceImageToTryon(pattern, imageUrl);
@@ -836,14 +841,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         });
       }
       replaceImageToTryon(pattern, imageUrl);
-    }
-
-    // Remove any existing injected try-on images to avoid duplicates
-    const existingInjected = listEl.querySelectorAll(
-      '[data-closet-injected="1"]'
-    );
-    for (const el of existingInjected) {
-      el.remove();
     }
 
     // Append to the thumbnail list
@@ -1065,6 +1062,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
             "#5988d7ff"
           );
         } catch (e) {
+          showTopToast("Try-on failed. Please try again.", "#ef4444");
           console.error("The Closet: processTryon failed:", e);
           // Optional: surface a user message or fallback to upload
           // await injectTryonImageUploadPopup();
@@ -1181,28 +1179,6 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       const existingInjected = document.querySelector<HTMLElement>(
         "[data-closet-injected='1']"
       );
-      // if (response?.success && response.signedUrl) {
-      //   if (existingInjected) {
-      //     const imageAlreadyLoaded = existingInjected.innerHTML.includes(
-      //       response.signedUrl
-      //     );
-      //     if (imageAlreadyLoaded) {
-      //       console.log("image already loaded, skipping injection");
-      //       return;
-      //     } else {
-      //       console.log("Removing previously injected try-on image.");
-      //       restoreOriginalImage(getSitePattern()!);
-      //       existingInjected.remove();
-      //     }
-      //   } else {
-      //     console.log("Injecting existing try-on image from storage.");
-      //     injectTryonImage(response.signedUrl as string);
-      //   }
-      // } else {
-      //   console.log("No existing try-on image found, removing if any.");
-      //   restoreOriginalImage(getSitePattern()!);
-      //   existingInjected?.remove();
-      // }
       if (!response?.success && !response.signedUrl) {
         console.log("No existing try-on image found, removing if any.");
         restoreOriginalImage(getSitePattern()!);
@@ -1216,6 +1192,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
         );
         if (imageAlreadyLoaded) return;
         restoreOriginalImage(getSitePattern()!);
+        // removing the existing injected will trigger re-injection
         existingInjected.remove();
       }
       updateTryonButtonForRetry();
@@ -1310,7 +1287,7 @@ let PATTERNS_JSON: Record<string, ProductPatternJSON> | null = null;
       });
       const listEl = document.querySelector(
         getSitePattern()?.selectors.thumbnailList!
-      );
+      )?.parentNode?.parentNode;
       if (listEl) {
         tryonImageObserver.observe(listEl, {
           childList: true,

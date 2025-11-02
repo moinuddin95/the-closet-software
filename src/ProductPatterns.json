@@ -74,18 +74,6 @@
     },
     "injectTemplate": ""
   },
-  "aritzia": {
-    "urlPattern": "/\\/product\\//",
-    "selectors": {
-      "titleSelector": "h1[data-testid='product-name-text']",
-      "insertTarget": "div[data-componentname='InfoHeader']",
-      "mainImage": "#product-images > a > img",
-      "priceSelector": "[data-testid='product-list-price-text']",
-      "thumbnailList": "#product-images",
-      "thumbnailItem": "#product-images > a"
-    },
-    "injectTemplate": ""
-  },
   "shein": {
     "urlPattern": "/-p-\\d+\\.html/i",
     "mouseOverTransition": true,
@@ -97,6 +85,18 @@
       "thumbnailList": "div.main-picture > div > ul",
       "thumbnailItem": "div.main-picture > div > ul > li",
       "videoThumbnail": ""
+    },
+    "injectTemplate": ""
+  },
+  "uniqlo": {
+    "urlPattern": "/\\/products\\//",
+    "selectors": {
+      "titleSelector": "main > div > div",
+      "insertTarget": "",
+      "mainImage": "aside > div:nth-child(1) img",
+      "priceSelector": "p.fr-ec-price-text",
+      "thumbnailList": "div.media-gallery--grid",
+      "thumbnailItem": "div.media-gallery--grid > div.media-enhancements.swiper-zoom-target"
     },
     "injectTemplate": ""
   }

@@ -17,7 +17,8 @@
     "*://*.garage.com/*",
     "*://*.aritzia.com/*",
     "*://*.hm.com/*",
-    "*://*.shein.com/*"
+    "*://*.shein.com/*",
+    "*://*.uniqlo.com/*"
   ],
   "content_scripts": [
     {
