@@ -67,10 +67,10 @@
     "selectors": {
       "titleSelector": "div#product-description-sticky-container > div:nth-child(2) > h1",
       "insertTarget": "div#product-description-sticky-container > div:nth-child(2)",
-      "mainImage": "div.css-wlquqj.eb7e4gv8 img",
+      "mainImage": "#react-Pdp img",
       "priceSelector": "div#product-description-sticky-container > div:nth-child(2) > div",
-      "thumbnailList": "div.css-wlquqj.eb7e4gv8",
-      "thumbnailItem": "div.css-6zh5v6.eb7e4gv6"
+      "thumbnailList": "#react-Pdp > div > div",
+      "thumbnailItem": "#react-Pdp > div > div > div"
     },
     "injectTemplate": ""
   },
