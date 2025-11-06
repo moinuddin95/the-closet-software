@@ -16,12 +16,12 @@
 
 ### Initial setup
 
-![Sequence diagram](./SEQUENCE_DIAGRAMS/INITIALIZATION.png)
+![Sequence diagram](/docs/SEQUENCE_DIAGRAMS/INITIALIZATION.png)
 
 
 ### Try-on flow
 
-![Sequence diagram](./SEQUENCE_DIAGRAMS/TRYON.png)
+![Sequence diagram](/docs/SEQUENCE_DIAGRAMS/TRYON.png)
 
 ## Message contract
 (All background <-> content messages, see `/BACKGROUND_WORKER.md` for data schema)
